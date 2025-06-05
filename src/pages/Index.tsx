@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Clock, Globe, Sparkles, RefreshCw, FileText, Calendar } from "lucide-react";
+import { Clock, Globe, Sparkles, RefreshCw, FileText, Calendar, Tag } from "lucide-react";
 import { toast } from "sonner";
 
 interface ScrapedArticle {
@@ -14,6 +14,10 @@ interface ScrapedArticle {
   title: string;
   originalContent: string;
   simplifiedContent: string;
+  detailedPoints: string[];
+  category: string;
+  categoryEmoji: string;
+  categoryName: string;
   url: string;
   isNew: boolean;
 }
@@ -24,23 +28,41 @@ const Index = () => {
   const [lastCheckTime, setLastCheckTime] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
 
-  // Mock data for demonstration
+  // Mock data with enhanced details and categorization
   const mockArticles: ScrapedArticle[] = [
     {
       id: "sed_04_Iun",
       date: "4 iunie 2025",
       title: "Informație de presă privind actele normative adoptate",
-      originalContent: "Guvernul României a adoptat în ședința din 4 iunie 2025 mai multe acte normative importante pentru dezvoltarea economică și socială a țării...",
-      simplifiedContent: "Astăzi, oamenii care conduc țara noastră s-au întâlnit și au hotărât lucruri importante! Au făcut reguli noi care ne vor ajuta pe toți să trăim mai bine. Este ca și cum ar fi o echipă mare care se gândește cum să facă totul mai frumos în România! 🏛️✨",
+      originalContent: "Guvernul României a adoptat în ședința din 4 iunie 2025 mai multe acte normative importante pentru dezvoltarea economică și socială a țării. Au fost aprobate măsuri pentru sprijinirea agriculturii, bugetul pentru infrastructură și noi reglementări pentru protecția mediului.",
+      simplifiedContent: "Astăzi, echipa care conduce țara noastră s-a întâlnit și a hotărât lucruri foarte importante! Au făcut reguli noi care ne vor ajuta pe toți să trăim mai bine. Au gândit cum să ajute fermierii, să facă drumuri mai frumoase și să păstreze natura curată! 🚜💰🌱",
+      detailedPoints: [
+        "Au hotărât să dea mai mulți bani fermierilor ca să poată crește legume și fructe mai frumoase 🥕",
+        "Au planuit să construiască drumuri noi și să repare cele vechi ca să mergem mai ușor cu mașina 🛣️",
+        "Au făcut reguli noi ca să păstrăm aerul curat și natura verde 🌳",
+        "Au decis să ajute familiile cu copii să aibă mai mulți bani pentru mâncare și haine 👨‍👩‍👧‍👦"
+      ],
+      category: "budget",
+      categoryEmoji: "💰",
+      categoryName: "Buget și Finanțe",
       url: "https://gov.ro/ro/guvernul/sedinte-guvern/informatie-de-presa-privind-actele-normative-adoptate-in-cadrul-edintei-guvernului-romaniei-din-4-iunie-2025",
       isNew: true
     },
     {
       id: "sed_03_Iun",
       date: "3 iunie 2025",
-      title: "Ședința anterioară a Guvernului",
-      originalContent: "În ședința precedentă au fost discutate aspecte referitoare la bugetul de stat...",
-      simplifiedContent: "Ieri, echipa care conduce țara a vorbit despre banii pe care îi avem pentru a face lucruri frumoase! Au planuit cum să cheltuiască banii pentru școli, parcuri și drumuri mai bune! 💰🎯",
+      title: "Măsuri pentru îmbunătățirea sistemului de educație",
+      originalContent: "În ședința precedentă au fost discutate aspecte referitoare la modernizarea sistemului de învățământ, construirea de noi școli și pregătirea profesorilor.",
+      simplifiedContent: "Ieri, echipa care conduce țara a vorbit despre cum să facă școlile și mai frumoase pentru toți copiii! Au planuit să construiască școli noi și să îi ajute pe profesori să predea și mai bine! 🎓📚",
+      detailedPoints: [
+        "Vor construi școli noi cu săli de clasă mari și frumoase 🏫",
+        "Vor cumpăra calculatoare și cărți noi pentru toate școlile 💻",
+        "Vor ajuta profesorii să învețe lucruri noi ca să ne predea și mai bine 👩‍🏫",
+        "Vor face parcuri de joacă mai mari în curtea școlilor 🛝"
+      ],
+      category: "education",
+      categoryEmoji: "🎓",
+      categoryName: "Educație",
       url: "https://gov.ro/ro/guvernul/sedinte-guvern/informatii-sedinta-03-iunie",
       isNew: false
     }
@@ -60,12 +82,29 @@ const Index = () => {
       const hasNewArticle = Math.random() > 0.7; // 30% chance of new article
       
       if (hasNewArticle) {
+        const categories = ['agriculture', 'health', 'infrastructure', 'environment'];
+        const randomCategory = categories[Math.floor(Math.random() * categories.length)];
+        const categoryData = {
+          agriculture: { emoji: '🚜', name: 'Agricultură' },
+          health: { emoji: '🏥', name: 'Sănătate' },
+          infrastructure: { emoji: '🛣️', name: 'Infrastructură' },
+          environment: { emoji: '🌱', name: 'Mediu' }
+        };
+        
         const newArticle: ScrapedArticle = {
           id: "sed_05_Iun",
           date: "5 iunie 2025",
           title: "Nouă decizie guvernamentală adoptată",
-          originalContent: "Guvernul a adoptat o nouă hotărâre privind...",
+          originalContent: "Guvernul a adoptat o nouă hotărâre privind dezvoltarea durabilă...",
           simplifiedContent: "Echipa care conduce țara a luat o decizie nouă și importantă! Este ca și cum ar fi inventat o regulă nouă ca să ne ajute pe toți! 🎉",
+          detailedPoints: [
+            "Au hotărât să planteze mai mulți copaci în parcuri 🌳",
+            "Vor face mai multe locuri de joacă pentru copii 🎠",
+            "Au decis să ajute animalele să aibă case mai frumoase 🐕"
+          ],
+          category: randomCategory,
+          categoryEmoji: categoryData[randomCategory].emoji,
+          categoryName: categoryData[randomCategory].name,
           url: "https://gov.ro/ro/guvernul/sedinte-guvern/noua-decizie-05-iunie",
           isNew: true
         };
@@ -185,17 +224,23 @@ const Index = () => {
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div className="space-y-1 flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Badge variant="secondary" className="text-sm">
+                          <Tag className="h-3 w-3 mr-1" />
+                          {article.categoryEmoji} {article.categoryName}
+                        </Badge>
+                        {article.isNew && (
+                          <Badge className="bg-green-500 hover:bg-green-600">
+                            NOU!
+                          </Badge>
+                        )}
+                      </div>
                       <CardTitle className="text-lg text-gray-800 leading-tight">
                         {article.title}
                       </CardTitle>
                       <CardDescription className="flex items-center gap-2">
                         <Calendar className="h-4 w-4" />
                         {article.date}
-                        {article.isNew && (
-                          <Badge className="bg-green-500 hover:bg-green-600">
-                            NOU!
-                          </Badge>
-                        )}
                       </CardDescription>
                     </div>
                   </div>
@@ -214,12 +259,26 @@ const Index = () => {
                   <Separator />
                   
                   <div>
+                    <h4 className="font-semibold text-green-700 mb-2 flex items-center gap-1">
+                      <Sparkles className="h-4 w-4" />
+                      Gata de Citit:
+                    </h4>
+                    <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
+                      <p className="text-sm text-green-800 leading-relaxed mb-3">{article.simplifiedContent}</p>
+                    </div>
+                  </div>
+
+                  <div>
                     <h4 className="font-semibold text-purple-700 mb-2 flex items-center gap-1">
                       <Sparkles className="h-4 w-4" />
-                      Versiunea pentru Copii:
+                      Puncte Importante:
                     </h4>
-                    <div className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-200">
-                      <p className="text-sm text-purple-800 leading-relaxed">{article.simplifiedContent}</p>
+                    <div className="space-y-2">
+                      {article.detailedPoints.map((point, index) => (
+                        <div key={index} className="p-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-200">
+                          <p className="text-sm text-purple-800 leading-relaxed">• {point}</p>
+                        </div>
+                      ))}
                     </div>
                   </div>
                   
@@ -250,6 +309,7 @@ const Index = () => {
             <p><strong>Selector CSS:</strong> div.sedinte_lista (pentru identificarea articolelor noi)</p>
             <p><strong>Frecvența de Verificare:</strong> Zilnic la 09:00</p>
             <p><strong>AI Model:</strong> GPT pentru simplificarea textului către limbaj pentru copii</p>
+            <p><strong>Categorizare:</strong> Automată pe baza cuvintelor cheie</p>
             <p><strong>Stocare:</strong> Local storage cu backup în cloud</p>
           </CardContent>
         </Card>

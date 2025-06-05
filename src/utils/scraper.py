@@ -14,9 +14,10 @@ import os
 from datetime import datetime, timedelta
 import re
 from dataclasses import dataclass, asdict
-from typing import List, Optional
+from typing import List, Optional, Tuple
 import schedule
 import logging
+from scraper_config import ScraperConfig
 
 # Configure logging
 logging.basicConfig(
@@ -35,26 +36,21 @@ class Article:
     title: str
     original_content: str
     simplified_content: str
+    detailed_points: List[str]
+    category: str
+    category_emoji: str
+    category_name: str
     url: str
     scraped_at: str
     is_new: bool = True
 
 class GovRoScraper:
     def __init__(self):
-        self.base_url = "https://gov.ro"
-        self.meetings_url = "https://gov.ro/ro/guvernul/sedinte-guvern"
-        self.data_file = "scraped_articles.json"
+        self.base_url = ScraperConfig.BASE_URL
+        self.meetings_url = ScraperConfig.MEETINGS_URL
+        self.data_file = ScraperConfig.DATA_FILE
         self.last_article_id = self.load_last_article_id()
-        
-        # Request headers to appear more like a real browser
-        self.headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-            'Accept-Language': 'ro-RO,ro;q=0.8,en-US;q=0.5,en;q=0.3',
-            'Accept-Encoding': 'gzip, deflate',
-            'Connection': 'keep-alive',
-            'Upgrade-Insecure-Requests': '1',
-        }
+        self.headers = ScraperConfig.REQUEST_HEADERS
 
     def load_last_article_id(self) -> Optional[str]:
         """Load the last processed article ID from storage."""
@@ -67,6 +63,78 @@ class GovRoScraper:
         except Exception as e:
             logging.error(f"Error loading last article ID: {e}")
         return None
+
+    def categorize_content(self, text: str) -> Tuple[str, str, str]:
+        """Categorize content based on keywords and return category info."""
+        text_lower = text.lower()
+        
+        for category_key, category_data in ScraperConfig.CATEGORIES.items():
+            if category_key == 'general':
+                continue
+                
+            keywords = category_data['keywords']
+            if any(keyword in text_lower for keyword in keywords):
+                return (
+                    category_key,
+                    category_data['emoji'],
+                    category_data['name']
+                )
+        
+        # Default to general category
+        general_cat = ScraperConfig.CATEGORIES['general']
+        return ('general', general_cat['emoji'], general_cat['name'])
+
+    def extract_detailed_points(self, content: str) -> List[str]:
+        """Extract detailed points from content and convert to kid-friendly format."""
+        # Split content into sentences and filter meaningful ones
+        sentences = re.split(r'[.!?]+', content)
+        points = []
+        
+        for sentence in sentences:
+            sentence = sentence.strip()
+            if len(sentence) > 20 and any(word in sentence.lower() for word in 
+                ['adoptat', 'aprobat', 'hotărât', 'stabilit', 'decis', 'măsuri']):
+                
+                # Simplify the sentence
+                simplified = self.simplify_sentence(sentence)
+                if simplified:
+                    points.append(simplified)
+        
+        # Ensure we have at least some points
+        if not points:
+            points = [
+                "Au luat decizii importante pentru țara noastră 🏛️",
+                "Au gândit cum să facă lucrurile mai bune pentru toată lumea 💭",
+                "Au vorbit despre cum să ne ajute pe toți să fim mai fericiți 😊"
+            ]
+        
+        return points[:4]  # Limit to 4 points for readability
+
+    def simplify_sentence(self, sentence: str) -> str:
+        """Simplify a single sentence for kids."""
+        sentence_lower = sentence.lower()
+        
+        # Apply word replacements
+        for old_word, new_word in ScraperConfig.WORD_REPLACEMENTS.items():
+            sentence_lower = sentence_lower.replace(old_word, new_word)
+        
+        # Add appropriate emojis based on content
+        if any(word in sentence_lower for word in ['bani', 'buget', 'finanțare']):
+            sentence_lower += " 💰"
+        elif any(word in sentence_lower for word in ['școli', 'educație', 'copii']):
+            sentence_lower += " 🎓"
+        elif any(word in sentence_lower for word in ['sănătate', 'spitale', 'medici']):
+            sentence_lower += " 🏥"
+        elif any(word in sentence_lower for word in ['drumuri', 'transport']):
+            sentence_lower += " 🛣️"
+        elif any(word in sentence_lower for word in ['natură', 'mediu', 'verde']):
+            sentence_lower += " 🌱"
+        
+        # Capitalize first letter
+        if sentence_lower:
+            sentence_lower = sentence_lower[0].upper() + sentence_lower[1:]
+        
+        return sentence_lower if len(sentence_lower) > 10 else ""
 
     def save_articles(self, articles: List[Article]):
         """Save articles to JSON file."""
@@ -127,17 +195,8 @@ class GovRoScraper:
             soup = BeautifulSoup(response.content, 'html.parser')
             
             # Try different selectors for content
-            content_selectors = [
-                '.article-content',
-                '.content-main',
-                '.post-content',
-                '#content',
-                'main',
-                '.main-content'
-            ]
-            
             content = ""
-            for selector in content_selectors:
+            for selector in ScraperConfig.CONTENT_SELECTORS:
                 content_div = soup.select_one(selector)
                 if content_div:
                     # Get text and clean it up
@@ -160,41 +219,25 @@ class GovRoScraper:
             logging.error(f"Error scraping article content: {e}")
             return ""
 
-    def simplify_text_for_kids(self, text: str) -> str:
+    def simplify_text_for_kids(self, text: str, category: str) -> str:
         """
         Simplify text for 5-year-olds using AI-like processing.
-        In a real implementation, this would call OpenAI API or similar.
+        In a real implementation, this would call OpenAI API.
         """
-        # This is a mock implementation. In reality, you'd call an AI API
         logging.info("Simplifying text for kids...")
         
         # Simple rules-based approach for demonstration
         simplified = text.lower()
         
-        # Replace complex words with simpler ones
-        replacements = {
-            'guvernul': 'echipa care conduce țara',
-            'adoptat': 'a hotărât',
-            'acte normative': 'reguli importante',
-            'ședința': 'întâlnirea',
-            'ministru': 'persoana importantă',
-            'hotărâre': 'decizie',
-            'economică': 'cu banii',
-            'dezvoltare': 'să crească frumos',
-            'implementare': 'să pună în practică',
-            'parlamentul': 'casa mare unde se fac legile',
-            'buget': 'banii pe care îi avem',
-        }
-        
-        for old, new in replacements.items():
+        # Apply word replacements
+        for old, new in ScraperConfig.WORD_REPLACEMENTS.items():
             simplified = simplified.replace(old, new)
         
-        # Add fun emojis and kid-friendly language
-        if 'decizie' in simplified or 'hotărât' in simplified:
-            simplified += " Este ca și cum ar fi o echipă mare care se gândește cum să facă totul mai frumos! 🏛️✨"
-        
-        if 'bani' in simplified:
-            simplified += " Au planuit cum să cheltuiască banii pentru școli, parcuri și drumuri mai bune! 💰🎯"
+        # Add category-specific fun ending
+        if category in ScraperConfig.FUN_ENDINGS:
+            simplified += ScraperConfig.FUN_ENDINGS[category]
+        else:
+            simplified += ScraperConfig.FUN_ENDINGS['general']
             
         # Capitalize first letter
         simplified = simplified[0].upper() + simplified[1:] if simplified else ""
@@ -220,23 +263,38 @@ class GovRoScraper:
                 logging.warning(f"No content found for {url}")
                 continue
             
+            # Categorize content
+            category, category_emoji, category_name = self.categorize_content(original_content)
+            
+            # Extract detailed points
+            detailed_points = self.extract_detailed_points(original_content)
+            
             # Simplify for kids
-            simplified_content = self.simplify_text_for_kids(original_content)
+            simplified_content = self.simplify_text_for_kids(original_content, category)
+            
+            # Truncate original content if too long
+            display_content = original_content[:ScraperConfig.MAX_CONTENT_LENGTH]
+            if len(original_content) > ScraperConfig.MAX_CONTENT_LENGTH:
+                display_content += "..."
             
             # Create article object
             article = Article(
                 id=article_id,
                 date=date_part,
                 title=title,
-                original_content=original_content[:1000] + "..." if len(original_content) > 1000 else original_content,
+                original_content=display_content,
                 simplified_content=simplified_content,
+                detailed_points=detailed_points,
+                category=category,
+                category_emoji=category_emoji,
+                category_name=category_name,
                 url=url,
                 scraped_at=datetime.now().isoformat(),
                 is_new=True
             )
             
             new_articles.append(article)
-            logging.info(f"Processed new article: {article_id}")
+            logging.info(f"Processed new article: {article_id} (Category: {category_name})")
             
             # Update last article ID
             if not self.last_article_id:
@@ -274,7 +332,7 @@ class GovRoScraper:
         if new_articles:
             logging.info(f"✅ Found {len(new_articles)} new articles!")
             for article in new_articles:
-                logging.info(f"  - {article.title} ({article.id})")
+                logging.info(f"  - {article.title} ({article.id}) - {article.category_emoji} {article.category_name}")
         else:
             logging.info("ℹ️  No new articles found.")
 
@@ -283,13 +341,13 @@ def main():
     scraper = GovRoScraper()
     
     # Schedule daily checks at 9 AM
-    schedule.every().day.at("09:00").do(scraper.run_daily_check)
+    schedule.every().day.at(ScraperConfig.DAILY_CHECK_TIME).do(scraper.run_daily_check)
     
     # Run an initial check
     scraper.run_daily_check()
     
     # Keep the script running
-    logging.info("Scraper is running. Scheduled to check daily at 9:00 AM.")
+    logging.info(f"Scraper is running. Scheduled to check daily at {ScraperConfig.DAILY_CHECK_TIME}.")
     logging.info("Press Ctrl+C to stop.")
     
     try:

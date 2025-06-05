@@ -35,6 +35,7 @@ class ScraperConfig:
     AI_PROMPT_TEMPLATE = """
     Rewrite the following Romanian government news article to be easily understood by a 5-year-old child. 
     Use simple words, short sentences, and make it fun and engaging. Add appropriate emojis.
+    Break down each important point into separate paragraphs explaining what it means.
     
     Original text: {text}
     
@@ -42,7 +43,7 @@ class ScraperConfig:
     """
     
     # Text processing
-    MAX_CONTENT_LENGTH = 1000
+    MAX_CONTENT_LENGTH = 2000  # Increased for more details
     
     # Headers for web requests
     REQUEST_HEADERS = {
@@ -52,6 +53,70 @@ class ScraperConfig:
         'Accept-Encoding': 'gzip, deflate',
         'Connection': 'keep-alive',
         'Upgrade-Insecure-Requests': '1',
+    }
+    
+    # Category detection keywords and emojis
+    CATEGORIES = {
+        'agriculture': {
+            'keywords': ['agricultură', 'fermieri', 'culturi', 'animale', 'recoltă', 'pământ', 'semințe', 'tractoare'],
+            'emoji': '🚜',
+            'name': 'Agricultură'
+        },
+        'budget': {
+            'keywords': ['buget', 'bani', 'finanțare', 'cheltuieli', 'venituri', 'investiții', 'economie', 'financiar'],
+            'emoji': '💰',
+            'name': 'Buget și Finanțe'
+        },
+        'people': {
+            'keywords': ['cetățeni', 'populație', 'oameni', 'familii', 'copii', 'pensionari', 'tineri', 'social'],
+            'emoji': '👥',
+            'name': 'Oameni și Societate'
+        },
+        'education': {
+            'keywords': ['educație', 'școli', 'universități', 'elevi', 'studenți', 'învățământ', 'profesori'],
+            'emoji': '🎓',
+            'name': 'Educație'
+        },
+        'health': {
+            'keywords': ['sănătate', 'spitale', 'medici', 'tratament', 'medicină', 'pacienți', 'asigurări'],
+            'emoji': '🏥',
+            'name': 'Sănătate'
+        },
+        'infrastructure': {
+            'keywords': ['drumuri', 'poduri', 'construcții', 'transport', 'autostrăzi', 'infrastructură'],
+            'emoji': '🛣️',
+            'name': 'Infrastructură'
+        },
+        'environment': {
+            'keywords': ['mediu', 'natură', 'poluare', 'ecologie', 'sustenabilitate', 'energie verde'],
+            'emoji': '🌱',
+            'name': 'Mediu'
+        },
+        'technology': {
+            'keywords': ['digitalizare', 'tehnologie', 'computer', 'internet', 'digital', 'IT'],
+            'emoji': '💻',
+            'name': 'Tehnologie'
+        },
+        'law': {
+            'keywords': ['lege', 'juridic', 'justiție', 'tribunal', 'regulament', 'normativ'],
+            'emoji': '⚖️',
+            'name': 'Legi și Justiție'
+        },
+        'defense': {
+            'keywords': ['apărare', 'armată', 'securitate', 'militari', 'NATO'],
+            'emoji': '🛡️',
+            'name': 'Apărare și Securitate'
+        },
+        'international': {
+            'keywords': ['extern', 'internațional', 'UE', 'Europa', 'relații', 'diplomație'],
+            'emoji': '🌍',
+            'name': 'Relații Internaționale'
+        },
+        'general': {
+            'keywords': [],
+            'emoji': '🏛️',
+            'name': 'General'
+        }
     }
     
     # Word replacements for kid-friendly text
@@ -75,16 +140,28 @@ class ScraperConfig:
         'infrastructură': 'drumuri și clădiri importante',
         'digitalizare': 'să folosim mai mult computerul',
         'sustenabilitate': 'să păstrăm natura frumoasă',
-        'transparență': 'să spunem adevărul despre tot'
+        'transparență': 'să spunem adevărul despre tot',
+        'cetățeni': 'oamenii din țară',
+        'eficiență': 'să facă lucrurile mai bine și mai repede',
+        'măsuri': 'lucruri pe care le fac',
+        'implementarea': 'să pună în practică',
+        'optimizare': 'să facă mai bine'
     }
     
-    # Fun endings for different types of content
+    # Fun endings for different categories
     FUN_ENDINGS = {
-        'decision': " Este ca și cum ar fi o echipă mare care se gândește cum să facă totul mai frumos! 🏛️✨",
-        'money': " Au planuit cum să cheltuiască banii pentru școli, parcuri și drumuri mai bune! 💰🎯",
-        'law': " Au făcut reguli noi ca să fim toți mai fericiți și în siguranță! 📜⭐",
-        'meeting': " S-au întâlnit ca niște prieteni care vor să facă lucruri bune pentru toți! 🤝🌟",
-        'default': " Lucrează pentru ca România să fie și mai frumoasă! 🇷🇴❤️"
+        'agriculture': " Fermele și animalele vor fi mai fericite! 🐄🌾",
+        'budget': " Banii vor fi cheltuiți pentru lucruri importante care ne ajută pe toți! 💰✨",
+        'people': " Toate familiile vor fi mai fericite și mai în siguranță! 👨‍👩‍👧‍👦❤️",
+        'education': " Școlile vor fi și mai frumoase pentru toți copiii! 📚🎒",
+        'health': " Doctorii vor putea să ne ajute și mai bine când suntem bolnavi! 👩‍⚕️💊",
+        'infrastructure': " Drumurile vor fi mai frumoase și mai sigure! 🚗🛣️",
+        'environment': " Natura va fi și mai verde și curată! 🌳🦋",
+        'technology': " Computerele ne vor ajuta să facem lucruri foarte cool! 💻🚀",
+        'law': " Regulile vor fi mai clare pentru toată lumea! 📜⚖️",
+        'defense': " Țara noastră va fi în siguranță! 🛡️🏰",
+        'international': " Ne vom înțelege și mai bine cu prietenii din alte țări! 🤝🌍",
+        'general': " Lucrează pentru ca România să fie și mai frumoasă! 🇷🇴❤️"
     }
 
 # Example usage configuration
@@ -93,5 +170,7 @@ SCRAPER_SETTINGS = {
     'notification_enabled': True,
     'backup_enabled': True,
     'ai_processing': True,
-    'debug_mode': False
+    'debug_mode': False,
+    'extract_detailed_points': True,
+    'categorize_content': True
 }
