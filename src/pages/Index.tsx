@@ -28,7 +28,7 @@ const Index = () => {
   const [lastCheckTime, setLastCheckTime] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
 
-  // Mock data with enhanced details and categorization
+  // Mock data with enhanced details and real-world examples
   const mockArticles: ScrapedArticle[] = [
     {
       id: "sed_04_Iun",
@@ -37,14 +37,16 @@ const Index = () => {
       originalContent: "Guvernul României a adoptat în ședința din 4 iunie 2025 mai multe acte normative importante pentru dezvoltarea economică și socială a țării. Au fost aprobate măsuri pentru sprijinirea agriculturii, bugetul pentru infrastructură și noi reglementări pentru protecția mediului.",
       simplifiedContent: "Astăzi, echipa care conduce țara noastră s-a întâlnit și a hotărât lucruri foarte importante! Au făcut reguli noi care ne vor ajuta pe toți să trăim mai bine. Au gândit cum să ajute fermierii, să facă drumuri mai frumoase și să păstreze natura curată! 🚜💰🌱",
       detailedPoints: [
-        "Au hotărât să dea mai mulți bani fermierilor ca să poată crește legume și fructe mai frumoase 🥕",
-        "Au planuit să construiască drumuri noi și să repare cele vechi ca să mergem mai ușor cu mașina 🛣️",
-        "Au făcut reguli noi ca să păstrăm aerul curat și natura verde 🌳",
-        "Au decis să ajute familiile cu copii să aibă mai mulți bani pentru mâncare și haine 👨‍👩‍👧‍👦"
+        "Au hotărât să construiască un drum nou în jurul orașului Botoșani ca să nu mai fie aglomerat centrul! 🛣️💰",
+        "Au planuit să construiască o casă nouă pentru pompierii care ne salvează când avem probleme! 🚒👨‍🚒",
+        "Au decis să dea mai mulți bani fermierilor ca să poată crește legume și fructe mai frumoase! 🚜🥕",
+        "Au făcut reguli noi ca să păstrăm aerul curat și natura verde! 🌳🌱",
+        "Au hotărât cum să cheltuie banii țării pentru lucruri importante care ne ajută pe toți! 💰📊",
+        "Au planuit să facă școlile și mai frumoase pentru toți copiii! 🎓📚"
       ],
-      category: "budget",
-      categoryEmoji: "💰",
-      categoryName: "Buget și Finanțe",
+      category: "infrastructure",
+      categoryEmoji: "🛣️",
+      categoryName: "Infrastructură",
       url: "https://gov.ro/ro/guvernul/sedinte-guvern/informatie-de-presa-privind-actele-normative-adoptate-in-cadrul-edintei-guvernului-romaniei-din-4-iunie-2025",
       isNew: true
     },
@@ -55,10 +57,10 @@ const Index = () => {
       originalContent: "În ședința precedentă au fost discutate aspecte referitoare la modernizarea sistemului de învățământ, construirea de noi școli și pregătirea profesorilor.",
       simplifiedContent: "Ieri, echipa care conduce țara a vorbit despre cum să facă școlile și mai frumoase pentru toți copiii! Au planuit să construiască școli noi și să îi ajute pe profesori să predea și mai bine! 🎓📚",
       detailedPoints: [
-        "Vor construi școli noi cu săli de clasă mari și frumoase 🏫",
-        "Vor cumpăra calculatoare și cărți noi pentru toate școlile 💻",
-        "Vor ajuta profesorii să învețe lucruri noi ca să ne predea și mai bine 👩‍🏫",
-        "Vor face parcuri de joacă mai mari în curtea școlilor 🛝"
+        "Vor construi școli noi cu săli de clasă mari și frumoase! 🏫✨",
+        "Vor cumpăra calculatoare și cărți noi pentru toate școlile! 💻📚",
+        "Vor ajuta profesorii să învețe lucruri noi ca să ne predea și mai bine! 👩‍🏫📝",
+        "Vor face parcuri de joacă mai mari în curtea școlilor! 🛝🎠"
       ],
       category: "education",
       categoryEmoji: "🎓",
@@ -82,26 +84,30 @@ const Index = () => {
       const hasNewArticle = Math.random() > 0.7; // 30% chance of new article
       
       if (hasNewArticle) {
-        const categories = ['agriculture', 'health', 'infrastructure', 'environment'];
+        const categories = ['agriculture', 'health', 'infrastructure', 'environment', 'defense'];
         const randomCategory = categories[Math.floor(Math.random() * categories.length)];
         const categoryData = {
           agriculture: { emoji: '🚜', name: 'Agricultură' },
           health: { emoji: '🏥', name: 'Sănătate' },
           infrastructure: { emoji: '🛣️', name: 'Infrastructură' },
-          environment: { emoji: '🌱', name: 'Mediu' }
+          environment: { emoji: '🌱', name: 'Mediu' },
+          defense: { emoji: '🛡️', name: 'Apărare și Securitate' }
         };
+        
+        const newPoints = [
+          "Au hotărât să planteze mai mulți copaci în parcuri pentru aer curat! 🌳🌿",
+          "Vor face mai multe locuri de joacă pentru copii în fiecare oraș! 🎠🛝",
+          "Au decis să ajute animalele să aibă case mai frumoase în zoo! 🐕🏠",
+          "Vor construi o bibliotecă mare cu multe cărți pentru copii! 📚📖"
+        ];
         
         const newArticle: ScrapedArticle = {
           id: "sed_05_Iun",
           date: "5 iunie 2025",
           title: "Nouă decizie guvernamentală adoptată",
-          originalContent: "Guvernul a adoptat o nouă hotărâre privind dezvoltarea durabilă...",
-          simplifiedContent: "Echipa care conduce țara a luat o decizie nouă și importantă! Este ca și cum ar fi inventat o regulă nouă ca să ne ajute pe toți! 🎉",
-          detailedPoints: [
-            "Au hotărât să planteze mai mulți copaci în parcuri 🌳",
-            "Vor face mai multe locuri de joacă pentru copii 🎠",
-            "Au decis să ajute animalele să aibă case mai frumoase 🐕"
-          ],
+          originalContent: "Guvernul a adoptat o nouă hotărâre privind dezvoltarea durabilă și îmbunătățirea calității vieții cetățenilor...",
+          simplifiedContent: "Echipa care conduce țara a luat o decizie nouă și importantă! Este ca și cum ar fi inventat o regulă nouă ca să ne ajute pe toți să fim mai fericiți! 🎉✨",
+          detailedPoints: newPoints,
           category: randomCategory,
           categoryEmoji: categoryData[randomCategory].emoji,
           categoryName: categoryData[randomCategory].name,
@@ -110,7 +116,7 @@ const Index = () => {
         };
         
         setArticles(prev => [newArticle, ...prev.map(a => ({ ...a, isNew: false }))]);
-        toast.success("Articol nou găsit și procesat!");
+        toast.success("Articol nou găsit și procesat cu puncte detaliate!");
       } else {
         toast.info("Nu au fost găsite articole noi.");
       }
@@ -307,9 +313,10 @@ const Index = () => {
           <CardContent className="text-sm text-gray-600 space-y-2">
             <p><strong>URL Monitorizat:</strong> https://gov.ro/ro/guvernul/sedinte-guvern</p>
             <p><strong>Selector CSS:</strong> div.sedinte_lista (pentru identificarea articolelor noi)</p>
+            <p><strong>Extragere Conținut:</strong> div.pageDescription (pentru conținutul detaliat structurat)</p>
             <p><strong>Frecvența de Verificare:</strong> Zilnic la 09:00</p>
             <p><strong>AI Model:</strong> GPT pentru simplificarea textului către limbaj pentru copii</p>
-            <p><strong>Categorizare:</strong> Automată pe baza cuvintelor cheie</p>
+            <p><strong>Categorizare:</strong> Automată pe baza cuvintelor cheie din HOTĂRÂRI DE GUVERN și NOTE</p>
             <p><strong>Stocare:</strong> Local storage cu backup în cloud</p>
           </CardContent>
         </Card>

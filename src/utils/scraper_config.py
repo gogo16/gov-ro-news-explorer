@@ -12,6 +12,7 @@ class ScraperConfig:
     # Selectors
     MEETING_DIV_CLASS = "sedinte_lista"
     CONTENT_SELECTORS = [
+        '.pageDescription',  # Primary selector for detailed content
         '.article-content',
         '.content-main', 
         '.post-content',
@@ -63,7 +64,7 @@ class ScraperConfig:
             'name': 'Agricultură'
         },
         'budget': {
-            'keywords': ['buget', 'bani', 'finanțare', 'cheltuieli', 'venituri', 'investiții', 'economie', 'financiar'],
+            'keywords': ['buget', 'bani', 'finanțare', 'cheltuieli', 'venituri', 'investiții', 'economie', 'financiar', 'lei', 'milioane'],
             'emoji': '💰',
             'name': 'Buget și Finanțe'
         },
@@ -83,7 +84,7 @@ class ScraperConfig:
             'name': 'Sănătate'
         },
         'infrastructure': {
-            'keywords': ['drumuri', 'poduri', 'construcții', 'transport', 'autostrăzi', 'infrastructură'],
+            'keywords': ['drumuri', 'poduri', 'construcții', 'transport', 'autostrăzi', 'infrastructură', 'expropriere', 'botoșani', 'centură'],
             'emoji': '🛣️',
             'name': 'Infrastructură'
         },
@@ -103,7 +104,7 @@ class ScraperConfig:
             'name': 'Legi și Justiție'
         },
         'defense': {
-            'keywords': ['apărare', 'armată', 'securitate', 'militari', 'NATO'],
+            'keywords': ['apărare', 'armată', 'securitate', 'militari', 'NATO', 'pompieri', 'situații de urgență'],
             'emoji': '🛡️',
             'name': 'Apărare și Securitate'
         },
@@ -145,7 +146,13 @@ class ScraperConfig:
         'eficiență': 'să facă lucrurile mai bine și mai repede',
         'măsuri': 'lucruri pe care le fac',
         'implementarea': 'să pună în practică',
-        'optimizare': 'să facă mai bine'
+        'optimizare': 'să facă mai bine',
+        'expropriere': 'să cumpere case și terenuri',
+        'imobile': 'case și terenuri',
+        'utilitate publică': 'pentru toată lumea',
+        'hotărâre de guvern': 'decizia echipei care conduce țara',
+        'pompieri': 'eroii care sting focul',
+        'situații de urgență': 'când se întâmplă lucruri rele'
     }
     
     # Fun endings for different categories
@@ -159,7 +166,7 @@ class ScraperConfig:
         'environment': " Natura va fi și mai verde și curată! 🌳🦋",
         'technology': " Computerele ne vor ajuta să facem lucruri foarte cool! 💻🚀",
         'law': " Regulile vor fi mai clare pentru toată lumea! 📜⚖️",
-        'defense': " Țara noastră va fi în siguranță! 🛡️🏰",
+        'defense': " Țara noastră va fi în siguranță și pompierii ne vor proteja! 🛡️🚒",
         'international': " Ne vom înțelege și mai bine cu prietenii din alte țări! 🤝🌍",
         'general': " Lucrează pentru ca România să fie și mai frumoasă! 🇷🇴❤️"
     }

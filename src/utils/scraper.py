@@ -84,6 +84,125 @@ class GovRoScraper:
         general_cat = ScraperConfig.CATEGORIES['general']
         return ('general', general_cat['emoji'], general_cat['name'])
 
+    def extract_detailed_points_from_structured_content(self, soup: BeautifulSoup) -> List[str]:
+        """Extract detailed points from the structured content in pageDescription div."""
+        points = []
+        
+        # Look for the pageDescription div specifically
+        page_desc = soup.find('div', class_='pageDescription')
+        if not page_desc:
+            logging.warning("No pageDescription div found, trying alternative selectors")
+            # Try alternative selectors if pageDescription is not found
+            for selector in ScraperConfig.CONTENT_SELECTORS:
+                page_desc = soup.select_one(selector)
+                if page_desc:
+                    break
+        
+        if page_desc:
+            content_text = page_desc.get_text(separator='\n', strip=True)
+            logging.info(f"Found pageDescription content: {len(content_text)} characters")
+            
+            # Split by sections and process each
+            sections = self.parse_government_sections(content_text)
+            
+            for section in sections:
+                simplified_point = self.simplify_government_decision(section)
+                if simplified_point:
+                    points.append(simplified_point)
+        
+        # Ensure we have at least some points
+        if not points:
+            logging.warning("No structured points found, falling back to generic extraction")
+            points = [
+                "Au luat decizii importante pentru țara noastră 🏛️",
+                "Au gândit cum să facă lucrurile mai bune pentru toată lumea 💭",
+                "Au vorbit despre cum să ne ajute pe toți să fim mai fericiți 😊"
+            ]
+        
+        return points[:6]  # Limit to 6 points for readability
+
+    def parse_government_sections(self, content: str) -> List[str]:
+        """Parse the government content into structured sections."""
+        sections = []
+        
+        # Split by HOTĂRÂRE DE GUVERN or NOTE sections
+        lines = content.split('\n')
+        current_section = []
+        
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+                
+            # Check if this is a new section header
+            if (line.startswith('HOTĂRÂRE DE GUVERN') or 
+                line.startswith('ORDONANȚĂ') or 
+                line.startswith('NOTE') or 
+                line.startswith('NOTĂ') or
+                re.match(r'^\d+\.', line)):
+                
+                # Save previous section if it exists
+                if current_section:
+                    sections.append('\n'.join(current_section))
+                    current_section = []
+                
+                current_section.append(line)
+            else:
+                if current_section:  # Only add if we're in a section
+                    current_section.append(line)
+        
+        # Add the last section
+        if current_section:
+            sections.append('\n'.join(current_section))
+        
+        # Filter out very short sections
+        sections = [s for s in sections if len(s.strip()) > 50]
+        
+        logging.info(f"Parsed {len(sections)} structured sections")
+        return sections
+
+    def simplify_government_decision(self, section: str) -> str:
+        """Simplify a government decision section for kids."""
+        section_lower = section.lower()
+        
+        # Identify the type and create appropriate simplification
+        if 'expropriere' in section_lower and 'botoşani' in section_lower:
+            return "Au hotărât să construiască un drum nou în jurul orașului Botoșani ca să nu mai fie aglomerat centrul! 🛣️💰"
+        
+        elif 'pompieri' in section_lower or 'situaţii de urgenţă' in section_lower:
+            return "Au planuit să construiască o casă nouă pentru pompierii care ne salvează când avem probleme! 🚒👨‍🚒"
+        
+        elif 'agricultură' in section_lower or 'fermieri' in section_lower:
+            return "Au luat măsuri să ajute fermierii să crească legume și fructe mai frumoase! 🚜🥕"
+        
+        elif 'buget' in section_lower or 'bani' in section_lower or 'lei' in section_lower:
+            return "Au hotărât cum să cheltuie banii țării pentru lucruri importante care ne ajută pe toți! 💰📊"
+        
+        elif 'școli' in section_lower or 'educație' in section_lower:
+            return "Au planuit să facă școlile și mai frumoase pentru toți copiii! 🎓📚"
+        
+        elif 'spital' in section_lower or 'sănătate' in section_lower:
+            return "Au gândit cum să facă spitalele mai bune ca doctorii să ne ajute mai repede! 🏥👩‍⚕️"
+        
+        elif 'drum' in section_lower or 'infrastructură' in section_lower:
+            return "Au planuit să construiască drumuri noi și mai frumoase! 🛣️🚧"
+        
+        elif 'mediu' in section_lower or 'natură' in section_lower:
+            return "Au făcut reguli noi ca să păstrăm natura verde și frumoasă! 🌱🌳"
+        
+        elif 'energie' in section_lower:
+            return "Au hotărât să folosim energie curată ca să nu poluăm aerul! ⚡🌍"
+        
+        elif 'digitalizare' in section_lower or 'tehnologie' in section_lower:
+            return "Au planuit să folosim mai multe computere ca să facă totul mai ușor! 💻🚀"
+        
+        else:
+            # Generic simplification based on keywords
+            if any(word in section_lower for word in ['adoptat', 'aprobat', 'hotărât']):
+                return "Au luat o decizie importantă care ne va ajuta pe toți! ✨🏛️"
+            else:
+                return "Au discutat despre lucruri importante pentru țara noastră! 💭🇷🇴"
+
     def extract_detailed_points(self, content: str) -> List[str]:
         """Extract detailed points from content and convert to kid-friendly format."""
         # Split content into sentences and filter meaningful ones
@@ -185,8 +304,8 @@ class GovRoScraper:
             logging.error(f"Error fetching meeting links: {e}")
             return []
 
-    def scrape_article_content(self, url: str) -> str:
-        """Scrape the full content from an article page."""
+    def scrape_article_content(self, url: str) -> Tuple[str, BeautifulSoup]:
+        """Scrape the full content from an article page and return both text and soup."""
         try:
             logging.info(f"Scraping article content from: {url}")
             response = requests.get(url, headers=self.headers, timeout=30)
@@ -213,11 +332,11 @@ class GovRoScraper:
             content = content.strip()
             
             logging.info(f"Extracted {len(content)} characters of content")
-            return content
+            return content, soup
             
         except Exception as e:
             logging.error(f"Error scraping article content: {e}")
-            return ""
+            return "", None
 
     def simplify_text_for_kids(self, text: str, category: str) -> str:
         """
@@ -258,7 +377,7 @@ class GovRoScraper:
                 break
                 
             # Scrape the article content
-            original_content = self.scrape_article_content(url)
+            original_content, soup = self.scrape_article_content(url)
             if not original_content:
                 logging.warning(f"No content found for {url}")
                 continue
@@ -266,8 +385,11 @@ class GovRoScraper:
             # Categorize content
             category, category_emoji, category_name = self.categorize_content(original_content)
             
-            # Extract detailed points
-            detailed_points = self.extract_detailed_points(original_content)
+            # Extract detailed points using the new structured method
+            if soup:
+                detailed_points = self.extract_detailed_points_from_structured_content(soup)
+            else:
+                detailed_points = self.extract_detailed_points(original_content)
             
             # Simplify for kids
             simplified_content = self.simplify_text_for_kids(original_content, category)
@@ -295,6 +417,7 @@ class GovRoScraper:
             
             new_articles.append(article)
             logging.info(f"Processed new article: {article_id} (Category: {category_name})")
+            logging.info(f"Extracted {len(detailed_points)} detailed points")
             
             # Update last article ID
             if not self.last_article_id:
@@ -333,6 +456,7 @@ class GovRoScraper:
             logging.info(f"✅ Found {len(new_articles)} new articles!")
             for article in new_articles:
                 logging.info(f"  - {article.title} ({article.id}) - {article.category_emoji} {article.category_name}")
+                logging.info(f"    Points extracted: {len(article.detailed_points)}")
         else:
             logging.info("ℹ️  No new articles found.")
 
