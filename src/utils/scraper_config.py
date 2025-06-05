@@ -5,11 +5,19 @@ import os
 from typing import Dict, List
 
 class ScraperConfig:
-    # URLs
+    # URLs - Government Sites
     BASE_URL = "https://gov.ro"
     MEETINGS_URL = "https://gov.ro/ro/guvernul/sedinte-guvern"
     
-    # Selectors
+    # URLs - MAI (Ministry of Internal Affairs)
+    MAI_BASE_URL = "https://www.mai.gov.ro"
+    MAI_NEWS_URL = "https://www.mai.gov.ro/category/comunicate-de-presa/"
+    
+    # URLs - MS (Ministry of Health)
+    MS_BASE_URL = "https://www.ms.ro"
+    MS_NEWS_URL = "https://www.ms.ro/ro/informatii-de-interes-public/noutati/"
+    
+    # Selectors - Government
     MEETING_DIV_CLASS = "sedinte_lista"
     CONTENT_SELECTORS = [
         '.pageDescription',  # Primary selector for detailed content
@@ -20,6 +28,62 @@ class ScraperConfig:
         'main',
         '.main-content'
     ]
+    
+    # Selectors - MAI
+    MAI_ARTICLE_SELECTOR = ".excerpt-big-article"
+    MAI_TITLE_SELECTOR = ".title-big-article a"
+    MAI_CONTENT_SELECTORS = [
+        '.entry-content',
+        '.post-content',
+        '.article-content',
+        'main .content',
+        '.page-content'
+    ]
+    
+    # Selectors - MS
+    MS_ARTICLE_SELECTOR = ".news-list article"
+    MS_TITLE_SELECTOR = "h3 a, .title a, a[title]"
+    MS_CONTENT_SELECTORS = [
+        '.content',
+        '.entry-content',
+        '.post-content',
+        '.article-content',
+        'main'
+    ]
+    
+    # Website configurations
+    WEBSITES = {
+        'gov': {
+            'name': 'Guvernul României',
+            'emoji': '🏛️',
+            'base_url': BASE_URL,
+            'news_url': MEETINGS_URL,
+            'article_selector': f'div.{MEETING_DIV_CLASS}',
+            'title_selector': 'a',
+            'content_selectors': CONTENT_SELECTORS,
+            'categories': ['infrastructure', 'budget', 'agriculture', 'education', 'general']
+        },
+        'mai': {
+            'name': 'Ministerul Afacerilor Interne',
+            'emoji': '🛡️',
+            'base_url': MAI_BASE_URL,
+            'news_url': MAI_NEWS_URL,
+            'article_selector': MAI_ARTICLE_SELECTOR,
+            'title_selector': MAI_TITLE_SELECTOR,
+            'content_selectors': MAI_CONTENT_SELECTORS,
+            'categories': ['defense', 'law', 'general']
+        },
+        'ms': {
+            'name': 'Ministerul Sănătății',
+            'emoji': '🏥',
+            'base_url': MS_BASE_URL,
+            'news_url': MS_NEWS_URL,
+            'article_selector': MS_ARTICLE_SELECTOR,
+            'title_selector': MS_TITLE_SELECTOR,
+            'content_selectors': MS_CONTENT_SELECTORS,
+            'categories': ['health', 'general']
+        }
+    }
     
     # File paths
     DATA_FILE = "scraped_articles.json"
@@ -79,7 +143,7 @@ class ScraperConfig:
             'name': 'Educație'
         },
         'health': {
-            'keywords': ['sănătate', 'spitale', 'medici', 'tratament', 'medicină', 'pacienți', 'asigurări'],
+            'keywords': ['sănătate', 'spitale', 'medici', 'tratament', 'medicină', 'pacienți', 'asigurări', 'coronavirus', 'covid', 'vaccinare'],
             'emoji': '🏥',
             'name': 'Sănătate'
         },
@@ -99,12 +163,12 @@ class ScraperConfig:
             'name': 'Tehnologie'
         },
         'law': {
-            'keywords': ['lege', 'juridic', 'justiție', 'tribunal', 'regulament', 'normativ'],
+            'keywords': ['lege', 'juridic', 'justiție', 'tribunal', 'regulament', 'normativ', 'penal', 'civil'],
             'emoji': '⚖️',
             'name': 'Legi și Justiție'
         },
         'defense': {
-            'keywords': ['apărare', 'armată', 'securitate', 'militari', 'NATO', 'pompieri', 'situații de urgență'],
+            'keywords': ['apărare', 'armată', 'securitate', 'militari', 'NATO', 'pompieri', 'situații de urgență', 'poliție', 'jandarmerie'],
             'emoji': '🛡️',
             'name': 'Apărare și Securitate'
         },
@@ -119,6 +183,8 @@ class ScraperConfig:
             'name': 'General'
         }
     }
+    
+    # ... keep existing code (WORD_REPLACEMENTS, FUN_ENDINGS, SCRAPER_SETTINGS)
     
     # Word replacements for kid-friendly text
     WORD_REPLACEMENTS = {
@@ -152,14 +218,18 @@ class ScraperConfig:
         'utilitate publică': 'pentru toată lumea',
         'hotărâre de guvern': 'decizia echipei care conduce țara',
         'pompieri': 'eroii care sting focul',
-        'situații de urgență': 'când se întâmplă lucruri rele'
+        'situații de urgență': 'când se întâmplă lucruri rele',
+        'poliție': 'oamenii care ne protejează',
+        'jandarmerie': 'soldații care păzesc orașul',
+        'spital': 'casa unde ne vindecă doctorii',
+        'medicament': 'pastilele care ne fac bine'
     }
     
     # Fun endings for different categories
     FUN_ENDINGS = {
         'agriculture': " Fermele și animalele vor fi mai fericite! 🐄🌾",
         'budget': " Banii vor fi cheltuiți pentru lucruri importante care ne ajută pe toți! 💰✨",
-        'people': " Toate familiile vor fi mai fericite și mai în siguranță! 👨‍👩‍👧‍👦❤️",
+        'people': " Toate familiile vor fi și mai fericite și mai în siguranță! 👨‍👩‍👧‍👦❤️",
         'education': " Școlile vor fi și mai frumoase pentru toți copiii! 📚🎒",
         'health': " Doctorii vor putea să ne ajute și mai bine când suntem bolnavi! 👩‍⚕️💊",
         'infrastructure': " Drumurile vor fi mai frumoase și mai sigure! 🚗🛣️",
