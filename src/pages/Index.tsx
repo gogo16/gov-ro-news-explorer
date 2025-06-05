@@ -5,8 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Clock, Globe, Sparkles, RefreshCw, FileText, Calendar, Tag, Building, Shield, Hospital } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Globe, Sparkles, FileText, Calendar as CalendarIcon, Tag, Building, Shield, Hospital } from "lucide-react";
 import { toast } from "sonner";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 import WebsiteMenu from "@/components/WebsiteMenu";
 
 interface ScrapedArticle {
@@ -21,7 +25,7 @@ interface ScrapedArticle {
   categoryName: string;
   url: string;
   isNew: boolean;
-  source: string; // Added source field
+  source: string;
 }
 
 interface Website {
@@ -36,9 +40,8 @@ interface Website {
 const Index = () => {
   const [articles, setArticles] = useState<ScrapedArticle[]>([]);
   const [selectedWebsite, setSelectedWebsite] = useState<string>('all');
-  const [isScrapingActive, setIsScrapingActive] = useState(false);
-  const [lastCheckTime, setLastCheckTime] = useState<string>("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>();
+  const [lastUpdateTime, setLastUpdateTime] = useState<string>("");
 
   // Website configurations
   const websites: Website[] = [
@@ -76,26 +79,23 @@ const Index = () => {
     }
   ];
 
-  // Mock data with enhanced details and multiple sources
+  // Extended mock data with multiple dates
   const mockArticles: ScrapedArticle[] = [
     {
-      id: "sed_04_Iun",
-      date: "4 iunie 2025",
+      id: "sed_05_Iun",
+      date: "5 iunie 2025",
       title: "Informație de presă privind actele normative adoptate",
-      originalContent: "Guvernul României a adoptat în ședința din 4 iunie 2025 mai multe acte normative importante pentru dezvoltarea economică și socială a țării. Au fost aprobate măsuri pentru sprijinirea agriculturii, bugetul pentru infrastructură și noi reglementări pentru protecția mediului.",
+      originalContent: "Guvernul României a adoptat în ședința din 5 iunie 2025 mai multe acte normative importante pentru dezvoltarea economică și socială a țării. Au fost aprobate măsuri pentru sprijinirea agriculturii, bugetul pentru infrastructură și noi reglementări pentru protecția mediului.",
       simplifiedContent: "Astăzi, echipa care conduce țara noastră s-a întâlnit și a hotărât lucruri foarte importante! Au făcut reguli noi care ne vor ajuta pe toți să trăim mai bine. Au gândit cum să ajute fermierii, să facă drumuri mai frumoase și să păstreze natura curată! 🚜💰🌱",
       detailedPoints: [
         "Au hotărât să construiască un drum nou în jurul orașului Botoșani ca să nu mai fie aglomerat centrul! 🛣️💰",
         "Au planuit să construiască o casă nouă pentru pompierii care ne salvează când avem probleme! 🚒👨‍🚒",
-        "Au decis să dea mai mulți bani fermierilor ca să poată crește legume și fructe mai frumoase! 🚜🥕",
-        "Au făcut reguli noi ca să păstrăm aerul curat și natura verde! 🌳🌱",
-        "Au hotărât cum să cheltuie banii țării pentru lucruri importante care ne ajută pe toți! 💰📊",
-        "Au planuit să facă școlile și mai frumoase pentru toți copiii! 🎓📚"
+        "Au decis să dea mai mulți bani fermierilor ca să poată crește legume și fructe mai frumoase! 🚜🥕"
       ],
       category: "infrastructure",
       categoryEmoji: "🛣️",
       categoryName: "Infrastructură",
-      url: "https://gov.ro/ro/guvernul/sedinte-guvern/informatie-de-presa-privind-actele-normative-adoptate-in-cadrul-edintei-guvernului-romaniei-din-4-iunie-2025",
+      url: "https://gov.ro/ro/guvernul/sedinte-guvern/informatie-de-presa-privind-actele-normative-adoptate-in-cadrul-edintei-guvernului-romaniei-din-5-iunie-2025",
       isNew: true,
       source: "gov"
     },
@@ -107,35 +107,48 @@ const Index = () => {
       simplifiedContent: "Premierul nostru s-a dus la televizor să vorbească cu oamenii despre cum ne protejează și ce planuri are ca să fim toți în siguranță! A explicat cum lucrează cu poliția și pompierii pentru noi! 🛡️📺",
       detailedPoints: [
         "A vorbit despre cum poliția ne protejează în fiecare zi! 👮‍♂️🚔",
-        "A explicat cum pompierii se pregătesc să ne salveze când avem probleme! 🚒👨‍🚒",
-        "A spus că vor face mai multe exerciții ca să fie gata să ne ajute! 🏃‍♂️💪",
-        "A promis că vor avea echipamente noi și mai bune! 🎒⚡"
+        "A explicat cum pompierii se pregătesc să ne salveze când avem probleme! 🚒👨‍🚒"
       ],
       category: "defense",
       categoryEmoji: "🛡️",
       categoryName: "Apărare și Securitate",
       url: "https://www.mai.gov.ro/participarea-premierului-interimar-catalin-predoiu-la-emisiunea-editie-speciala-antena-3-cnn/",
-      isNew: false,
+      isNew: true,
       source: "mai"
     },
     {
-      id: "ms_05_Iun",
-      date: "5 iunie 2025", 
+      id: "ms_04_Iun",
+      date: "4 iunie 2025", 
       title: "Noi măsuri pentru îmbunătățirea serviciilor medicale",
       originalContent: "Ministerul Sănătății anunță implementarea unor noi măsuri pentru îmbunătățirea calității serviciilor medicale în spitalele din România, inclusiv modernizarea echipamentelor și pregătirea personalului medical.",
       simplifiedContent: "Doctorii vor avea aparate noi și mai bune ca să ne poată ajuta mai repede când suntem bolnavi! Vor învăța lucruri noi ca să știe să ne îngrijească și mai bine! 🏥👩‍⚕️",
       detailedPoints: [
         "Vor cumpăra aparate noi pentru spitale ca să ne vindece mai repede! 🏥⚡",
-        "Doctorii vor învăța să folosească tehnologii noi! 👩‍⚕️💻",
-        "Vor face spitalele mai frumoase și mai curate! ✨🧼",
-        "Vor fi mai multe medicamente pentru copii! 💊👶"
+        "Doctorii vor învăța să folosească tehnologii noi! 👩‍⚕️💻"
       ],
       category: "health",
       categoryEmoji: "🏥",
       categoryName: "Sănătate",
       url: "https://www.ms.ro/ro/informatii-de-interes-public/noutati/masuri-servicii-medicale",
-      isNew: true,
+      isNew: false,
       source: "ms"
+    },
+    {
+      id: "gov_03_Iun",
+      date: "3 iunie 2025",
+      title: "Hotărâre privind bugetul pentru educație",
+      originalContent: "Guvernul a aprobat suplimentarea bugetului pentru educație cu 50 milioane lei pentru modernizarea școlilor din mediul rural.",
+      simplifiedContent: "Echipa care conduce țara a hotărât să dea mai mulți bani pentru școli! Vor face școlile din sate mai frumoase și mai moderne! 🎓💰",
+      detailedPoints: [
+        "Vor repara și moderniza școlile din sate! 🏫✨",
+        "Vor cumpăra calculatoare noi pentru copii! 💻📚"
+      ],
+      category: "education",
+      categoryEmoji: "🎓",
+      categoryName: "Educație",
+      url: "https://gov.ro/ro/guvernul/sedinte-guvern/hotarare-buget-educatie",
+      isNew: false,
+      source: "gov"
     }
   ];
 
@@ -149,89 +162,59 @@ const Index = () => {
     }));
   };
 
-  // Filter articles based on selected website
-  const filteredArticles = selectedWebsite === 'all' 
-    ? articles 
-    : articles.filter(article => article.source === selectedWebsite);
+  // Filter articles based on selected website and date
+  const filteredArticles = articles.filter(article => {
+    const websiteMatch = selectedWebsite === 'all' || article.source === selectedWebsite;
+    const dateMatch = !selectedDate || article.date === format(selectedDate, "d MMMM yyyy", { locale: { localize: { month: (n: number) => ['ianuarie', 'februarie', 'martie', 'aprilie', 'mai', 'iunie', 'iulie', 'august', 'septembrie', 'octombrie', 'noiembrie', 'decembrie'][n] } } });
+    return websiteMatch && dateMatch;
+  });
+
+  // Sort articles to show new ones first
+  const sortedArticles = filteredArticles.sort((a, b) => {
+    if (a.isNew && !b.isNew) return -1;
+    if (!a.isNew && b.isNew) return 1;
+    return 0;
+  });
 
   const websitesWithCounts = updateWebsiteArticleCounts(articles);
 
   useEffect(() => {
     setArticles(mockArticles);
-    setLastCheckTime(new Date().toLocaleString('ro-RO'));
-  }, []);
-
-  const handleManualScrape = async () => {
-    setIsLoading(true);
-    toast.info("Începe căutarea de articole noi din toate sursele...");
+    setLastUpdateTime(new Date().toLocaleString('ro-RO'));
     
-    // Simulate scraping process
-    setTimeout(() => {
-      const hasNewArticle = Math.random() > 0.6; // 40% chance of new article
+    // Auto-refresh every 24 hours
+    const interval = setInterval(() => {
+      // Simulate checking for new articles
+      const hasNewArticle = Math.random() > 0.7; // 30% chance of new article
       
       if (hasNewArticle) {
         const sources = ['gov', 'mai', 'ms'];
         const randomSource = sources[Math.floor(Math.random() * sources.length)];
         
-        const sourceConfig = {
-          gov: { emoji: '🏛️', name: 'Guvernul României', categories: ['infrastructure', 'budget', 'agriculture'] },
-          mai: { emoji: '🛡️', name: 'Min. Afacerilor Interne', categories: ['defense', 'law'] },
-          ms: { emoji: '🏥', name: 'Min. Sănătății', categories: ['health'] }
-        };
-        
-        const config = sourceConfig[randomSource];
-        const randomCategory = config.categories[Math.floor(Math.random() * config.categories.length)];
-        
-        const categoryData = {
-          infrastructure: { emoji: '🛣️', name: 'Infrastructură' },
-          budget: { emoji: '💰', name: 'Buget și Finanțe' },
-          agriculture: { emoji: '🚜', name: 'Agricultură' },
-          defense: { emoji: '🛡️', name: 'Apărare și Securitate' },
-          law: { emoji: '⚖️', name: 'Legi și Justiție' },
-          health: { emoji: '🏥', name: 'Sănătate' }
-        };
-        
-        const newPoints = [
-          "Au hotărât să planteze mai mulți copaci în parcuri pentru aer curat! 🌳🌿",
-          "Vor face mai multe locuri de joacă pentru copii în fiecare oraș! 🎠🛝",
-          "Au decis să ajute animalele să aibă case mai frumoase în zoo! 🐕🏠",
-          "Vor construi o bibliotecă mare cu multe cărți pentru copii! 📚📖"
-        ];
-        
         const newArticle: ScrapedArticle = {
-          id: `${randomSource}_06_Iun`,
-          date: "6 iunie 2025",
-          title: `Nouă decizie de la ${config.name}`,
-          originalContent: `${config.name} a adoptat o nouă hotărâre privind dezvoltarea și îmbunătățirea serviciilor...`,
-          simplifiedContent: `${config.name} a luat o decizie nouă și importantă! ${config.emoji} Este ca și cum ar fi inventat o regulă nouă ca să ne ajute pe toți să fim mai fericiți! 🎉✨`,
-          detailedPoints: newPoints,
-          category: randomCategory,
-          categoryEmoji: categoryData[randomCategory].emoji,
-          categoryName: categoryData[randomCategory].name,
-          url: `https://example.com/${randomSource}/noua-decizie-06-iunie`,
+          id: `${randomSource}_${Date.now()}`,
+          date: format(new Date(), "d MMMM yyyy", { locale: { localize: { month: (n: number) => ['ianuarie', 'februarie', 'martie', 'aprilie', 'mai', 'iunie', 'iulie', 'august', 'septembrie', 'octombrie', 'noiembrie', 'decembrie'][n] } } }),
+          title: `Nouă decizie din ${format(new Date(), "d MMMM yyyy")}`,
+          originalContent: `Nouă hotărâre adoptată astăzi...`,
+          simplifiedContent: `Astăzi s-a hotărât ceva nou și important! 🎉✨`,
+          detailedPoints: ["Au luat o decizie nouă care ne ajută pe toți! 🌟"],
+          category: "general",
+          categoryEmoji: "🏛️",
+          categoryName: "General",
+          url: `https://example.com/${randomSource}/noua-decizie`,
           isNew: true,
           source: randomSource
         };
         
         setArticles(prev => [newArticle, ...prev.map(a => ({ ...a, isNew: false }))]);
-        toast.success(`Articol nou găsit de la ${config.name}!`);
-      } else {
-        toast.info("Nu au fost găsite articole noi din nicio sursă.");
+        toast.success("Articole noi disponibile!");
       }
       
-      setLastCheckTime(new Date().toLocaleString('ro-RO'));
-      setIsLoading(false);
-    }, 3000);
-  };
+      setLastUpdateTime(new Date().toLocaleString('ro-RO'));
+    }, 24 * 60 * 60 * 1000); // 24 hours
 
-  const toggleAutoScraping = () => {
-    setIsScrapingActive(!isScrapingActive);
-    if (!isScrapingActive) {
-      toast.success("Monitorizarea automată activată pentru toate sursele!");
-    } else {
-      toast.info("Monitorizarea automată oprită.");
-    }
-  };
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-6">
@@ -248,6 +231,10 @@ const Index = () => {
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
             Monitorizez zilnic site-urile guvernamentale pentru articole noi și le transform în povești ușor de înțeles pentru copii! 
           </p>
+          <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
+            <CalendarIcon className="h-4 w-4" />
+            Ultima actualizare: {lastUpdateTime}
+          </div>
         </div>
 
         {/* Website Menu */}
@@ -262,70 +249,48 @@ const Index = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="p-6">
-            <WebsiteMenu
-              selectedWebsite={selectedWebsite}
-              onWebsiteChange={setSelectedWebsite}
-              websites={websitesWithCounts}
-            />
-          </CardContent>
-        </Card>
-
-        {/* Control Panel */}
-        <Card className="border-2 border-blue-200 shadow-lg">
-          <CardHeader className="bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-t-lg">
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="h-5 w-5" />
-              Panou de Control
-            </CardTitle>
-            <CardDescription className="text-blue-100">
-              Controlează procesul de monitorizare și procesare
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="p-6">
             <div className="flex flex-wrap items-center gap-4">
-              <Button 
-                onClick={handleManualScrape} 
-                disabled={isLoading}
-                className="bg-blue-600 hover:bg-blue-700"
-              >
-                {isLoading ? (
-                  <>
-                    <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                    Caut articole noi...
-                  </>
-                ) : (
-                  <>
-                    <Globe className="mr-2 h-4 w-4" />
-                    Verifică Toate Sursele
-                  </>
-                )}
-              </Button>
+              <WebsiteMenu
+                selectedWebsite={selectedWebsite}
+                onWebsiteChange={setSelectedWebsite}
+                websites={websitesWithCounts}
+              />
               
-              <Button 
-                onClick={toggleAutoScraping}
-                variant={isScrapingActive ? "destructive" : "outline"}
-              >
-                {isScrapingActive ? (
-                  <>
-                    <RefreshCw className="mr-2 h-4 w-4" />
-                    Oprește Monitorizarea
-                  </>
-                ) : (
-                  <>
-                    <Calendar className="mr-2 h-4 w-4" />
-                    Activează Monitorizarea Zilnică
-                  </>
+              <div className="flex items-center gap-2">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "justify-start text-left font-normal",
+                        !selectedDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {selectedDate ? format(selectedDate, "d MMMM yyyy", { locale: { localize: { month: (n: number) => ['ianuarie', 'februarie', 'martie', 'aprilie', 'mai', 'iunie', 'iulie', 'august', 'septembrie', 'octombrie', 'noiembrie', 'decembrie'][n] } } }) : "Toate datele"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={selectedDate}
+                      onSelect={setSelectedDate}
+                      initialFocus
+                      className="pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+                
+                {selectedDate && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSelectedDate(undefined)}
+                  >
+                    Resetează
+                  </Button>
                 )}
-              </Button>
-              
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <Clock className="h-4 w-4" />
-                Ultima verificare: {lastCheckTime}
               </div>
-              
-              <Badge variant={isScrapingActive ? "default" : "secondary"} className="ml-auto">
-                {isScrapingActive ? "ACTIV" : "INACTIV"}
-              </Badge>
             </div>
           </CardContent>
         </Card>
@@ -335,20 +300,25 @@ const Index = () => {
           <div className="flex items-center gap-2">
             <FileText className="h-6 w-6 text-blue-600" />
             <h2 className="text-2xl font-bold text-gray-800">
-              Articole Procesate
+              Articole
               {selectedWebsite !== 'all' && (
                 <span className="ml-2 text-lg text-gray-600">
                   - {websitesWithCounts.find(w => w.id === selectedWebsite)?.name}
                 </span>
               )}
+              {selectedDate && (
+                <span className="ml-2 text-lg text-gray-600">
+                  - {format(selectedDate, "d MMMM yyyy", { locale: { localize: { month: (n: number) => ['ianuarie', 'februarie', 'martie', 'aprilie', 'mai', 'iunie', 'iulie', 'august', 'septembrie', 'octombrie', 'noiembrie', 'decembrie'][n] } } })}
+                </span>
+              )}
             </h2>
             <Badge variant="outline" className="ml-2">
-              {filteredArticles.length} {selectedWebsite === 'all' ? 'total' : 'din această sursă'}
+              {sortedArticles.length} articole
             </Badge>
           </div>
 
           <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
-            {filteredArticles.map((article) => {
+            {sortedArticles.map((article) => {
               const sourceWebsite = websites.find(w => w.id === article.source);
               return (
                 <Card key={article.id} className={`transition-all duration-300 hover:shadow-xl ${
@@ -375,7 +345,7 @@ const Index = () => {
                           {article.title}
                         </CardTitle>
                         <CardDescription className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4" />
+                          <CalendarIcon className="h-4 w-4" />
                           {article.date}
                         </CardDescription>
                       </div>
@@ -434,40 +404,20 @@ const Index = () => {
               );
             })}
           </div>
-        </div>
 
-        {/* Technical Info */}
-        <Card className="bg-gray-50 border-gray-200">
-          <CardHeader>
-            <CardTitle className="text-lg text-gray-700">Informații Tehnice</CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm text-gray-600 space-y-2">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <p><strong>🏛️ GOV.RO:</strong></p>
-                <p>URL: https://gov.ro/ro/guvernul/sedinte-guvern</p>
-                <p>Selector: div.sedinte_lista</p>
-                <p>Conținut: div.pageDescription</p>
-              </div>
-              <div className="space-y-2">
-                <p><strong>🛡️ MAI.GOV.RO:</strong></p>
-                <p>URL: https://www.mai.gov.ro/category/comunicate-de-presa/</p>
-                <p>Selector: .excerpt-big-article</p>
-                <p>Link: .title-big-article a</p>
-              </div>
-              <div className="space-y-2">
-                <p><strong>🏥 MS.RO:</strong></p>
-                <p>URL: https://www.ms.ro/ro/informatii-de-interes-public/noutati/</p>
-                <p>Selector: .news-list article</p>
-                <p>Link: h3 a, .title a</p>
-              </div>
+          {sortedArticles.length === 0 && (
+            <div className="text-center py-12">
+              <CalendarIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-600 mb-2">Nu sunt articole disponibile</h3>
+              <p className="text-gray-500">
+                {selectedDate 
+                  ? "Nu au fost găsite articole pentru data selectată." 
+                  : "Nu au fost găsite articole pentru sursa selectată."
+                }
+              </p>
             </div>
-            <Separator className="my-4" />
-            <p><strong>Frecvența de Verificare:</strong> Zilnic la 09:00 pentru toate sursele</p>
-            <p><strong>AI Model:</strong> GPT pentru simplificarea textului către limbaj pentru copii</p>
-            <p><strong>Categorizare:</strong> Automată pe baza cuvintelor cheie specifice fiecărei surse</p>
-          </CardContent>
-        </Card>
+          )}
+        </div>
       </div>
     </div>
   );
