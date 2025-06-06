@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,6 +11,9 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import WebsiteMenu from "@/components/WebsiteMenu";
+import SearchAndFilters from "@/components/SearchAndFilters";
+import LegalTermTooltip from "@/components/LegalTermTooltip";
+import { filterArticles, highlightLegalTerms } from "@/utils/textProcessing";
 
 interface ScrapedArticle {
   id: string;
@@ -42,6 +44,11 @@ const Index = () => {
   const [selectedWebsite, setSelectedWebsite] = useState<string>('all');
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [lastUpdateTime, setLastUpdateTime] = useState<string>("");
+  
+  // New search and filter states
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [documentType, setDocumentType] = useState<string>("all");
+  const [subject, setSubject] = useState<string>("all");
 
   // Romanian date formatter
   const formatRomanianDate = (date: Date) => {
@@ -174,12 +181,27 @@ const Index = () => {
     }));
   };
 
-  // Filter articles based on selected website and date
-  const filteredArticles = articles.filter(article => {
-    const websiteMatch = selectedWebsite === 'all' || article.source === selectedWebsite;
-    const dateMatch = !selectedDate || article.date === formatRomanianDate(selectedDate);
-    return websiteMatch && dateMatch;
-  });
+  // Enhanced filter function
+  const getFilteredArticles = () => {
+    let filtered = articles;
+    
+    // Website filter
+    if (selectedWebsite !== 'all') {
+      filtered = filtered.filter(article => article.source === selectedWebsite);
+    }
+    
+    // Date filter
+    if (selectedDate) {
+      filtered = filtered.filter(article => article.date === formatRomanianDate(selectedDate));
+    }
+    
+    // Search and advanced filters
+    filtered = filterArticles(filtered, searchTerm, documentType, subject);
+    
+    return filtered;
+  };
+
+  const filteredArticles = getFilteredArticles();
 
   // Sort articles to show new ones first
   const sortedArticles = filteredArticles.sort((a, b) => {
@@ -189,6 +211,35 @@ const Index = () => {
   });
 
   const websitesWithCounts = updateWebsiteArticleCounts(articles);
+
+  // Check if there are active filters
+  const hasActiveFilters = searchTerm !== "" || documentType !== "all" || subject !== "all";
+
+  // Clear all filters function
+  const clearAllFilters = () => {
+    setSearchTerm("");
+    setDocumentType("all");
+    setSubject("all");
+    setSelectedDate(undefined);
+    setSelectedWebsite("all");
+  };
+
+  // Function to render text with legal term tooltips
+  const renderTextWithTooltips = (text: string) => {
+    const parts = highlightLegalTerms(text);
+    
+    return parts.map((part, index) => {
+      if (React.isValidElement(part) && part.props['data-term']) {
+        const term = part.props['data-term'];
+        return (
+          <LegalTermTooltip key={index} term={term}>
+            {part.props.children}
+          </LegalTermTooltip>
+        );
+      }
+      return <span key={index}>{part}</span>;
+    });
+  };
 
   useEffect(() => {
     setArticles(mockArticles);
@@ -248,6 +299,18 @@ const Index = () => {
             Ultima actualizare: {lastUpdateTime}
           </div>
         </div>
+
+        {/* Search and Filters */}
+        <SearchAndFilters
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          documentType={documentType}
+          onDocumentTypeChange={setDocumentType}
+          subject={subject}
+          onSubjectChange={setSubject}
+          onClearFilters={clearAllFilters}
+          hasActiveFilters={hasActiveFilters || selectedDate !== undefined || selectedWebsite !== 'all'}
+        />
 
         {/* Website Menu */}
         <Card className="border-2 border-purple-200 shadow-lg">
@@ -354,7 +417,7 @@ const Index = () => {
                           )}
                         </div>
                         <CardTitle className="text-lg text-gray-800 leading-tight">
-                          {article.title}
+                          {renderTextWithTooltips(article.title)}
                         </CardTitle>
                         <CardDescription className="flex items-center gap-2">
                           <CalendarIcon className="h-4 w-4" />
@@ -370,7 +433,9 @@ const Index = () => {
                         Conținut Original:
                       </h4>
                       <ScrollArea className="h-20 w-full border rounded p-3 bg-gray-50">
-                        <p className="text-sm text-gray-600">{article.originalContent}</p>
+                        <p className="text-sm text-gray-600">
+                          {renderTextWithTooltips(article.originalContent)}
+                        </p>
                       </ScrollArea>
                     </div>
                     
@@ -422,10 +487,7 @@ const Index = () => {
               <CalendarIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-gray-600 mb-2">Nu sunt articole disponibile</h3>
               <p className="text-gray-500">
-                {selectedDate 
-                  ? "Nu au fost găsite articole pentru data selectată." 
-                  : "Nu au fost găsite articole pentru sursa selectată."
-                }
+                Nu au fost găsite articole pentru criteriile selectate. Încercați să modificați filtrele.
               </p>
             </div>
           )}
