@@ -43,6 +43,18 @@ const Index = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [lastUpdateTime, setLastUpdateTime] = useState<string>("");
 
+  // Romanian date formatter
+  const formatRomanianDate = (date: Date) => {
+    const months = [
+      'ianuarie', 'februarie', 'martie', 'aprilie', 'mai', 'iunie',
+      'iulie', 'august', 'septembrie', 'octombrie', 'noiembrie', 'decembrie'
+    ];
+    const day = date.getDate();
+    const month = months[date.getMonth()];
+    const year = date.getFullYear();
+    return `${day} ${month} ${year}`;
+  };
+
   // Website configurations
   const websites: Website[] = [
     {
@@ -165,7 +177,7 @@ const Index = () => {
   // Filter articles based on selected website and date
   const filteredArticles = articles.filter(article => {
     const websiteMatch = selectedWebsite === 'all' || article.source === selectedWebsite;
-    const dateMatch = !selectedDate || article.date === format(selectedDate, "d MMMM yyyy", { locale: { localize: { month: (n: number) => ['ianuarie', 'februarie', 'martie', 'aprilie', 'mai', 'iunie', 'iulie', 'august', 'septembrie', 'octombrie', 'noiembrie', 'decembrie'][n] } } });
+    const dateMatch = !selectedDate || article.date === formatRomanianDate(selectedDate);
     return websiteMatch && dateMatch;
   });
 
@@ -193,8 +205,8 @@ const Index = () => {
         
         const newArticle: ScrapedArticle = {
           id: `${randomSource}_${Date.now()}`,
-          date: format(new Date(), "d MMMM yyyy", { locale: { localize: { month: (n: number) => ['ianuarie', 'februarie', 'martie', 'aprilie', 'mai', 'iunie', 'iulie', 'august', 'septembrie', 'octombrie', 'noiembrie', 'decembrie'][n] } } }),
-          title: `Nouă decizie din ${format(new Date(), "d MMMM yyyy")}`,
+          date: formatRomanianDate(new Date()),
+          title: `Nouă decizie din ${formatRomanianDate(new Date())}`,
           originalContent: `Nouă hotărâre adoptată astăzi...`,
           simplifiedContent: `Astăzi s-a hotărât ceva nou și important! 🎉✨`,
           detailedPoints: ["Au luat o decizie nouă care ne ajută pe toți! 🌟"],
@@ -267,7 +279,7 @@ const Index = () => {
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {selectedDate ? format(selectedDate, "d MMMM yyyy", { locale: { localize: { month: (n: number) => ['ianuarie', 'februarie', 'martie', 'aprilie', 'mai', 'iunie', 'iulie', 'august', 'septembrie', 'octombrie', 'noiembrie', 'decembrie'][n] } } }) : "Toate datele"}
+                      {selectedDate ? formatRomanianDate(selectedDate) : "Toate datele"}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
@@ -308,7 +320,7 @@ const Index = () => {
               )}
               {selectedDate && (
                 <span className="ml-2 text-lg text-gray-600">
-                  - {format(selectedDate, "d MMMM yyyy", { locale: { localize: { month: (n: number) => ['ianuarie', 'februarie', 'martie', 'aprilie', 'mai', 'iunie', 'iulie', 'august', 'septembrie', 'octombrie', 'noiembrie', 'decembrie'][n] } } })}
+                  - {formatRomanianDate(selectedDate)}
                 </span>
               )}
             </h2>
