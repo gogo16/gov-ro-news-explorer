@@ -12,6 +12,43 @@ export const legalTerms = [
   "act normativ"
 ];
 
+// Function to remove diacritics from Romanian text
+export const removeDiacritics = (text: string): string => {
+  const diacriticsMap: { [key: string]: string } = {
+    'ă': 'a', 'â': 'a', 'á': 'a', 'à': 'a',
+    'î': 'i', 'í': 'i', 'ì': 'i',
+    'ș': 's', 'ş': 's', 'ś': 's',
+    'ț': 't', 'ţ': 't', 'ť': 't',
+    'ó': 'o', 'ò': 'o', 'ô': 'o',
+    'é': 'e', 'è': 'e', 'ê': 'e',
+    'ú': 'u', 'ù': 'u', 'û': 'u',
+    'ń': 'n', 'ň': 'n',
+    'ć': 'c', 'č': 'c',
+    'ř': 'r',
+    'ď': 'd',
+    'ľ': 'l',
+    'ž': 'z',
+    // Capital letters
+    'Ă': 'A', 'Â': 'A', 'Á': 'A', 'À': 'A',
+    'Î': 'I', 'Í': 'I', 'Ì': 'I',
+    'Ș': 'S', 'Ş': 'S', 'Ś': 'S',
+    'Ț': 'T', 'Ţ': 'T', 'Ť': 'T',
+    'Ó': 'O', 'Ò': 'O', 'Ô': 'O',
+    'É': 'E', 'È': 'E', 'Ê': 'E',
+    'Ú': 'U', 'Ù': 'U', 'Û': 'U',
+    'Ń': 'N', 'Ň': 'N',
+    'Ć': 'C', 'Č': 'C',
+    'Ř': 'R',
+    'Ď': 'D',
+    'Ľ': 'L',
+    'Ž': 'Z'
+  };
+
+  return text.replace(/[ăâáàîíìșşśțţťóòôéèêúùûńňćčřďľž]/gi, (match) => {
+    return diacriticsMap[match] || match;
+  });
+};
+
 export const highlightLegalTerms = (text: string): React.ReactNode[] => {
   // Sort terms by length (longest first) to avoid partial matches
   const sortedTerms = [...legalTerms].sort((a, b) => b.length - a.length);
@@ -57,22 +94,22 @@ export const filterArticles = (
   subject: string
 ) => {
   return articles.filter(article => {
-    // Search term filter
+    // Search term filter - now ignoring diacritics
     const searchMatch = !searchTerm || 
-      article.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      article.originalContent.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      article.simplifiedContent.toLowerCase().includes(searchTerm.toLowerCase());
+      removeDiacritics(article.title.toLowerCase()).includes(removeDiacritics(searchTerm.toLowerCase())) ||
+      removeDiacritics(article.originalContent.toLowerCase()).includes(removeDiacritics(searchTerm.toLowerCase())) ||
+      removeDiacritics(article.simplifiedContent.toLowerCase()).includes(removeDiacritics(searchTerm.toLowerCase()));
     
-    // Document type filter
+    // Document type filter - also ignoring diacritics
     const documentTypeMatch = documentType === "all" || 
-      article.title.toLowerCase().includes(documentType) ||
-      article.originalContent.toLowerCase().includes(documentType);
+      removeDiacritics(article.title.toLowerCase()).includes(removeDiacritics(documentType)) ||
+      removeDiacritics(article.originalContent.toLowerCase()).includes(removeDiacritics(documentType));
     
-    // Subject filter
+    // Subject filter - also ignoring diacritics
     const subjectMatch = subject === "all" || 
       article.category === subject ||
-      article.title.toLowerCase().includes(subject) ||
-      article.originalContent.toLowerCase().includes(subject);
+      removeDiacritics(article.title.toLowerCase()).includes(removeDiacritics(subject)) ||
+      removeDiacritics(article.originalContent.toLowerCase()).includes(removeDiacritics(subject));
     
     return searchMatch && documentTypeMatch && subjectMatch;
   });
