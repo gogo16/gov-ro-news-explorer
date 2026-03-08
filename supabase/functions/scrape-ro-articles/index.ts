@@ -34,15 +34,15 @@ const RO_SOURCES = [
     id: 'madr',
     name: 'Min. Agriculturii',
     listingUrl: 'https://www.madr.ro/comunicare/comunicate-de-presa.html',
-    articlePattern: /^https:\/\/www\.madr\.ro\/comunicare\/comunicate-de-presa\//,
-    fallbackPattern: /^https:\/\/www\.madr\.ro\//,
+    articlePattern: /^https:\/\/www\.madr\.ro\/comunicare\/[a-z0-9-]+\.html$/,
+    fallbackPattern: /^https:\/\/www\.madr\.ro\/[a-z0-9-]+\/[a-z0-9-]+\.html$/,
   },
   {
     id: 'mae',
     name: 'Min. Afacerilor Externe',
     listingUrl: 'https://www.mae.ro/node/2011',
-    articlePattern: /^https:\/\/www\.mae\.ro\/node\/\d+$/,
-    fallbackPattern: /^https:\/\/www\.mae\.ro\//,
+    articlePattern: /^https?:\/\/(www\.)?mae\.ro\/node\/\d+$/,
+    fallbackPattern: /^https?:\/\/(www\.)?mae\.ro\//,
   },
 ]
 
@@ -177,6 +177,9 @@ async function aiSimplify(title: string, content: string, language: string): Pro
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY')
     if (!LOVABLE_API_KEY) return null
 
+    // Rate limit: wait 3s before each AI call
+    await new Promise(r => setTimeout(r, 3000))
+
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!
 
@@ -219,24 +222,54 @@ function cleanText(text: string): string {
 async function discoverArticleUrls(firecrawlKey: string, source: typeof RO_SOURCES[0]): Promise<string[]> {
   console.log(`[${source.id}] Discovering articles from: ${source.listingUrl}`)
 
-  const response = await fetch(`${FIRECRAWL_API}/scrape`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${firecrawlKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      url: source.listingUrl,
-      formats: ['links'],
-      onlyMainContent: true,
-      location: { country: 'RO', languages: ['ro'] },
-    }),
-  })
+  // For JS-heavy sites (madr, mae), use Firecrawl map endpoint which handles JS better
+  const useMap = source.id === 'madr' || source.id === 'mae'
 
-  const data = await response.json()
-  if (!response.ok) throw new Error(`Firecrawl error ${response.status}: ${JSON.stringify(data)}`)
+  let allLinks: string[] = []
 
-  const allLinks: string[] = data.data?.links || data.links || []
+  if (useMap) {
+    // Use Firecrawl search to find recent articles from these JS-heavy sites
+    const domain = new URL(source.listingUrl).hostname
+    const response = await fetch(`${FIRECRAWL_API}/search`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${firecrawlKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        query: `site:${domain} comunicate presa 2026`,
+        limit: 20,
+        lang: 'ro',
+        country: 'RO',
+        tbs: 'qdr:m',
+      }),
+    })
+
+    const data = await response.json()
+    if (!response.ok) throw new Error(`Firecrawl search error ${response.status}: ${JSON.stringify(data)}`)
+    const results = data.data || []
+    allLinks = results.map((r: any) => r.url).filter(Boolean)
+  } else {
+    const response = await fetch(`${FIRECRAWL_API}/scrape`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${firecrawlKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        url: source.listingUrl,
+        formats: ['links'],
+        onlyMainContent: true,
+        waitFor: 3000,
+        location: { country: 'RO', languages: ['ro'] },
+      }),
+    })
+
+    const data = await response.json()
+    if (!response.ok) throw new Error(`Firecrawl error ${response.status}: ${JSON.stringify(data)}`)
+    allLinks = data.data?.links || data.links || []
+  }
+
   console.log(`[${source.id}] Found ${allLinks.length} total links`)
 
   const articleUrls = allLinks.filter(url => {
@@ -265,6 +298,7 @@ async function scrapeArticle(firecrawlKey: string, url: string): Promise<{
       url,
       formats: ['markdown'],
       onlyMainContent: true,
+      waitFor: 5000,
       location: { country: 'RO', languages: ['ro'] },
     }),
   })
@@ -279,6 +313,8 @@ async function scrapeArticle(firecrawlKey: string, url: string): Promise<{
   const metadata = data.data?.metadata || data.metadata || {}
 
   if (!markdown || markdown.length < 100) return null
+  // Skip JS-blocked pages
+  if (markdown.includes('Enable JavaScript') || markdown.includes('Verifying your browser')) return null
 
   const cleaned = cleanText(markdown)
   const title = metadata.title || cleaned.split('\n')[0]?.substring(0, 200) || ''

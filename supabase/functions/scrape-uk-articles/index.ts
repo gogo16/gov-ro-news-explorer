@@ -124,6 +124,9 @@ async function aiSimplify(title: string, content: string, language: string): Pro
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY')
     if (!LOVABLE_API_KEY) return null
 
+    // Rate limit: wait 3s before each AI call
+    await new Promise(r => setTimeout(r, 3000))
+
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!
 
@@ -228,8 +231,10 @@ async function scrapeArticle(firecrawlKey: string, url: string): Promise<{
   const metadata = data.data?.metadata || data.metadata || {}
 
   if (!markdown || markdown.length < 100) return null
+  if (markdown.includes('Enable JavaScript') || markdown.includes('Verifying your browser')) return null
 
-  const cleaned = cleanText(markdown)
+  // Strip cookie banners from scraped content
+  const cleaned = cleanText(markdown).replace(/Cookies on GOV\.UK[\s\S]*?(?=\n[A-Z])/i, '').trim()
   const title = metadata.title || cleaned.split('\n')[0]?.substring(0, 200) || ''
 
   // Try to extract date from content or metadata
