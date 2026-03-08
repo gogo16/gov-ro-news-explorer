@@ -120,11 +120,23 @@ const ArticlePage: React.FC = () => {
               <CardContent className="space-y-6">
                 {/* Simplified version — prominent */}
                 <div className="p-5 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 rounded-xl border border-green-200 dark:border-green-800">
-                  <h2 className="font-semibold text-green-700 dark:text-green-400 mb-3 flex items-center gap-2 text-lg">
-                    <Sparkles className="h-5 w-5" />{labels.simplified}
-                  </h2>
+                  <div className="flex items-center justify-between mb-3">
+                    <h2 className="font-semibold text-green-700 dark:text-green-400 flex items-center gap-2 text-lg">
+                      <Sparkles className="h-5 w-5" />{labels.simplified}
+                    </h2>
+                    <TextToSpeech text={article.simplifiedContent} language={country === 'ro' ? 'ro' : 'en'} />
+                  </div>
                   <p className="text-green-800 dark:text-green-300 leading-relaxed text-base">{article.simplifiedContent}</p>
                 </div>
+
+                {/* Share as Image */}
+                <ShareImageCard
+                  title={article.title}
+                  simplifiedContent={article.simplifiedContent}
+                  source={sourceWebsite?.name || article.source}
+                  date={article.date}
+                  country={country}
+                />
 
                 {/* Key Points */}
                 <div>
