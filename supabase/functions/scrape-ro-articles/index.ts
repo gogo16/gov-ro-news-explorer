@@ -34,15 +34,15 @@ const RO_SOURCES = [
     id: 'madr',
     name: 'Min. Agriculturii',
     listingUrl: 'https://www.madr.ro/comunicare/comunicate-de-presa.html',
-    articlePattern: /^https:\/\/www\.madr\.ro\/comunicare\/comunicate-de-presa\//,
-    fallbackPattern: /^https:\/\/www\.madr\.ro\//,
+    articlePattern: /^https:\/\/www\.madr\.ro\/comunicare\/[a-z0-9-]+\.html$/,
+    fallbackPattern: /^https:\/\/www\.madr\.ro\/[a-z0-9-]+\/[a-z0-9-]+\.html$/,
   },
   {
     id: 'mae',
     name: 'Min. Afacerilor Externe',
     listingUrl: 'https://www.mae.ro/node/2011',
-    articlePattern: /^https:\/\/www\.mae\.ro\/node\/\d+$/,
-    fallbackPattern: /^https:\/\/www\.mae\.ro\//,
+    articlePattern: /^https?:\/\/(www\.)?mae\.ro\/node\/\d+$/,
+    fallbackPattern: /^https?:\/\/(www\.)?mae\.ro\//,
   },
 ]
 
