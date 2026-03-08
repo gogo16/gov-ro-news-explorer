@@ -252,6 +252,27 @@ const Admin = () => {
           <Button size="sm" variant="ghost" className="text-white hover:bg-white/20 text-xs" onClick={() => setManageDialogOpen('interests')}>💡 Interests</Button>
           <Button size="sm" variant="ghost" className="text-white hover:bg-white/20 text-xs" onClick={() => setManageDialogOpen('texts')}>✏️ Page Texts</Button>
           <Separator orientation="vertical" className="h-6 bg-white/30" />
+          <Button
+            size="sm"
+            variant="ghost"
+            className="text-white hover:bg-white/20 text-xs gap-1"
+            disabled={triggerScrape.isPending}
+            onClick={() => {
+              triggerScrape.mutate(undefined, {
+                onSuccess: (data) => toast({ title: '🔄 Scrape complete', description: `Found ${data?.articles_found || 0} new articles` }),
+                onError: (err) => toast({ title: 'Scrape failed', description: err.message, variant: 'destructive' }),
+              });
+            }}
+          >
+            {triggerScrape.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Zap className="h-3 w-3" />}
+            Scrape UK
+          </Button>
+          {latestRun && (
+            <span className="text-xs opacity-70">
+              Last: {latestRun.status} ({latestRun.articles_found} articles)
+            </span>
+          )}
+          <Separator orientation="vertical" className="h-6 bg-white/30" />
           <Button size="sm" variant="ghost" className="text-white hover:bg-white/20" onClick={handleLogout}><LogOut className="h-4 w-4 mr-1" /> Logout</Button>
         </div>
       </div>
