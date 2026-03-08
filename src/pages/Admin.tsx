@@ -258,14 +258,29 @@ const Admin = () => {
             className="text-white hover:bg-white/20 text-xs gap-1"
             disabled={triggerScrape.isPending}
             onClick={() => {
-              triggerScrape.mutate(undefined, {
-                onSuccess: (data) => toast({ title: '🔄 Scrape complete', description: `Found ${data?.articles_found || 0} new articles` }),
-                onError: (err) => toast({ title: 'Scrape failed', description: err.message, variant: 'destructive' }),
+              triggerScrape.mutate('ro', {
+                onSuccess: (data) => toast({ title: '🔄 Scrape RO complete', description: `Found ${data?.articles_found || 0} new articles` }),
+                onError: (err) => toast({ title: 'Scrape RO failed', description: err.message, variant: 'destructive' }),
               });
             }}
           >
             {triggerScrape.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Zap className="h-3 w-3" />}
-            Scrape UK
+            Scrape 🇷🇴
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="text-white hover:bg-white/20 text-xs gap-1"
+            disabled={triggerScrape.isPending}
+            onClick={() => {
+              triggerScrape.mutate('uk', {
+                onSuccess: (data) => toast({ title: '🔄 Scrape UK complete', description: `Found ${data?.articles_found || 0} new articles` }),
+                onError: (err) => toast({ title: 'Scrape UK failed', description: err.message, variant: 'destructive' }),
+              });
+            }}
+          >
+            {triggerScrape.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Zap className="h-3 w-3" />}
+            Scrape 🇬🇧
           </Button>
           {latestRun && (
             <span className="text-xs opacity-70">

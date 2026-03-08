@@ -73,8 +73,9 @@ export function useTriggerScrape() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async () => {
-      const { data, error } = await supabase.functions.invoke('scrape-uk-articles');
+    mutationFn: async (country: 'uk' | 'ro' = 'uk') => {
+      const functionName = country === 'ro' ? 'scrape-ro-articles' : 'scrape-uk-articles';
+      const { data, error } = await supabase.functions.invoke(functionName);
       if (error) throw error;
       return data;
     },

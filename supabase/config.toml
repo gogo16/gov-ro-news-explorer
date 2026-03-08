@@ -2,3 +2,6 @@ project_id = "efcbwzcaddbniqxgxuxm"
 
 [functions.scrape-uk-articles]
 verify_jwt = false
+
+[functions.scrape-ro-articles]
+verify_jwt = false
