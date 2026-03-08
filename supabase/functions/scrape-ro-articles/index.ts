@@ -222,25 +222,49 @@ function cleanText(text: string): string {
 async function discoverArticleUrls(firecrawlKey: string, source: typeof RO_SOURCES[0]): Promise<string[]> {
   console.log(`[${source.id}] Discovering articles from: ${source.listingUrl}`)
 
-  const response = await fetch(`${FIRECRAWL_API}/scrape`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${firecrawlKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      url: source.listingUrl,
-      formats: ['links'],
-      onlyMainContent: true,
-      waitFor: 3000,
-      location: { country: 'RO', languages: ['ro'] },
-    }),
-  })
+  // For JS-heavy sites (madr, mae), use Firecrawl map endpoint which handles JS better
+  const useMap = source.id === 'madr' || source.id === 'mae'
 
-  const data = await response.json()
-  if (!response.ok) throw new Error(`Firecrawl error ${response.status}: ${JSON.stringify(data)}`)
+  let allLinks: string[] = []
 
-  const allLinks: string[] = data.data?.links || data.links || []
+  if (useMap) {
+    const response = await fetch(`${FIRECRAWL_API}/map`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${firecrawlKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        url: source.listingUrl,
+        search: 'comunicate presa',
+        limit: 50,
+      }),
+    })
+
+    const data = await response.json()
+    if (!response.ok) throw new Error(`Firecrawl map error ${response.status}: ${JSON.stringify(data)}`)
+    allLinks = data.links || data.data?.links || []
+  } else {
+    const response = await fetch(`${FIRECRAWL_API}/scrape`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${firecrawlKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        url: source.listingUrl,
+        formats: ['links'],
+        onlyMainContent: true,
+        waitFor: 3000,
+        location: { country: 'RO', languages: ['ro'] },
+      }),
+    })
+
+    const data = await response.json()
+    if (!response.ok) throw new Error(`Firecrawl error ${response.status}: ${JSON.stringify(data)}`)
+    allLinks = data.data?.links || data.links || []
+  }
+
   console.log(`[${source.id}] Found ${allLinks.length} total links`)
 
   const articleUrls = allLinks.filter(url => {
