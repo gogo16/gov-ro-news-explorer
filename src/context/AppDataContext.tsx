@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { FileText } from 'lucide-react';
 import { Country, CountryConfig, ScrapedArticle, ArticleTag, romaniaConfig, ukConfig } from '@/data/countryConfig';
 
 interface AppData {
@@ -44,10 +45,18 @@ const deserializeConfig = (data: any, defaultConfig: CountryConfig): CountryConf
   const { labels: savedLabels, ...rest } = data;
   const { _articleCountTemplate, ...labelRest } = savedLabels || {};
   const template = _articleCountTemplate || (data.code === 'ro' ? '{n} articole' : '{n} articles');
+
+  // Restore icon components from defaultConfig or use FileText as fallback
+  const defaultWebsiteIcons = new Map(defaultConfig.websites.map(w => [w.id, w.icon]));
+  const websites = (rest.websites || defaultConfig.websites).map((w: any) => ({
+    ...w,
+    icon: defaultWebsiteIcons.get(w.id) || FileText,
+  }));
+
   return {
     ...defaultConfig,
     ...rest,
-    websites: rest.websites || defaultConfig.websites,
+    websites,
     articles: rest.articles || defaultConfig.articles,
     documentTypes: rest.documentTypes || defaultConfig.documentTypes,
     subjects: rest.subjects || defaultConfig.subjects,
