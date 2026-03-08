@@ -113,6 +113,8 @@ export const romaniaConfig: CountryConfig = {
     { id: 'gov', name: 'Guvernul României', emoji: '🏛️', description: 'Hotărâri și decizii guvernamentale', icon: Building },
     { id: 'mai', name: 'Min. Afacerilor Interne', emoji: '🛡️', description: 'Comunicate despre securitate și ordine publică', icon: Shield },
     { id: 'ms', name: 'Min. Sănătății', emoji: '🏥', description: 'Informații despre sănătate publică', icon: Hospital },
+    { id: 'madr', name: 'Min. Agriculturii', emoji: '🚜', description: 'Comunicate despre agricultură și dezvoltare rurală', icon: Wheat },
+    { id: 'mae', name: 'Min. Afacerilor Externe', emoji: '🌍', description: 'Relații internaționale și diplomație', icon: Globe2 },
   ],
   documentTypes: [
     { value: "all", label: "Toate tipurile" },
