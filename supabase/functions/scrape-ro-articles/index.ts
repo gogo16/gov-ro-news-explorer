@@ -155,20 +155,32 @@ const WORD_REPLACEMENTS: Record<string, string> = {
 }
 
 function simplifyContentFallback(text: string): string {
-  let simplified = text
+  // Extract meaningful content: skip headers, get first substantial paragraph
+  const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 50)
+  // Skip lines that look like metadata (dates, types, navigation)
+  const contentLines = lines.filter(l => 
+    !l.startsWith('Tip:') && !l.startsWith('Data:') && !l.match(/^(Select|An:|Lună:)/) &&
+    !l.match(/^- \d+ -/) && !l.includes('Legături rapide') && !l.includes('Centrul de presă')
+  )
+  let simplified = contentLines.slice(0, 3).join(' ')
   for (const [term, replacement] of Object.entries(WORD_REPLACEMENTS)) {
     simplified = simplified.replace(new RegExp(term, 'gi'), replacement)
   }
-  if (simplified.length > 600) simplified = simplified.substring(0, 597) + '...'
+  if (simplified.length > 500) simplified = simplified.substring(0, 497) + '...'
   return simplified + ' 🇷🇴✨'
 }
 
 function extractKeyPointsFallback(text: string): string[] {
-  const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 30)
-  const unique = [...new Set(sentences.map(s => s.trim()))]
+  const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 40)
+  const contentLines = lines.filter(l => 
+    !l.includes('cookie') && !l.includes('Cookie') && !l.includes('Legături rapide') &&
+    !l.match(/^(Select|An:|Lună:|Tip:|Data:)/) && !l.match(/^- \d+ -/)
+  )
+  const unique = [...new Set(contentLines)]
   return unique.slice(0, 4).map((s, i) => {
     const emojis = ['📌', '✅', '💡', '⚡']
-    return `${s.trim()}. ${emojis[i % emojis.length]}`
+    const trimmed = s.length > 200 ? s.substring(0, 197) + '...' : s
+    return `${trimmed} ${emojis[i % emojis.length]}`
   })
 }
 
@@ -227,6 +239,10 @@ function cleanText(text: string): string {
     .replace(/-{3,}/g, '')
     .replace(/\n{3,}/g, '\n\n')
 
+  // Strip cookie banners (MAE, general RO sites)
+  cleaned = cleaned.replace(/^I agree!\s*/i, '')
+  cleaned = cleaned.replace(/This website uses cookies[\s\S]*?Cookie Consent plugin for the EU cookie law\s*/gi, '')
+  cleaned = cleaned.replace(/Acest site folosește cookies[\s\S]*?(?:politica de cookies|cookie policy)\s*/gi, '')
   // Strip YouTube embed boilerplate
   cleaned = cleaned.replace(/Sari la conținut[\s\S]*?YouTube[\s\S]*?(?:AnuleazăConfirmă|Vizionează pe)/gi, '')
   cleaned = cleaned.replace(/Skip to content[\s\S]*?YouTube[\s\S]*?(?:Cancel|Watch on)/gi, '')
@@ -234,6 +250,15 @@ function cleanText(text: string): string {
   cleaned = cleaned.replace(/Alte articole:[\s\S]*$/i, '')
   cleaned = cleaned.replace(/Share on Facebook[\s\S]*$/i, '')
   cleaned = cleaned.replace(/ULTIMA ORĂ[\s\S]*$/i, '')
+  // Strip MAE footer/sidebar
+  cleaned = cleaned.replace(/Centrul de presă[\s\S]*$/i, '')
+  cleaned = cleaned.replace(/Agenda MAE[\s\S]*$/i, '')
+  cleaned = cleaned.replace(/Conectat la M@E[\s\S]*$/i, '')
+  cleaned = cleaned.replace(/Rate limit exceeded[\s\S]*$/i, '')
+  cleaned = cleaned.replace(/Tweets by[\s\S]*$/i, '')
+  // Strip MAE header navigation
+  cleaned = cleaned.replace(/^Ministerul Afacerilor Externe\s*Ministerul Afacerilor Externe - Legături rapide\s*/i, '')
+  cleaned = cleaned.replace(/Comunicate de presă\s*An:\s*Select[\s\S]*?Lună:\s*Select\s*/i, '')
   // Strip image placeholders
   cleaned = cleaned.replace(/!\[\]/g, '')
   cleaned = cleaned.replace(/!\[[^\]]*\]/g, '')
@@ -243,12 +268,15 @@ function cleanText(text: string): string {
   return cleaned.trim()
 }
 
-// Validate that content is a real article, not a YouTube embed or navigation page
+// Validate that content is a real article, not a YouTube embed, listing page or navigation page
 function isValidArticleContent(text: string): boolean {
   const lower = text.toLowerCase()
   const invalidMarkers = ['youtube', 'vizionează mai târziu', 'watch later', 'enable javascript', 'verifying your browser']
   const markerCount = invalidMarkers.filter(m => lower.includes(m)).length
   if (markerCount >= 2) return false
+  // Detect listing pages (multiple "Tip: Comunicat de presă" entries)
+  const listingMatches = text.match(/Tip:\s*Comunicat de presă/gi)
+  if (listingMatches && listingMatches.length >= 3) return false
   // Must have at least 200 chars of actual content after cleaning
   if (text.length < 200) return false
   return true

@@ -98,7 +98,14 @@ function detectInterests(text: string): string[] {
 }
 
 function simplifyContentFallback(text: string): string {
-  let simplified = text
+  // Extract meaningful content: skip article type headers, get first substantial paragraphs
+  const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 40)
+  const contentLines = lines.filter(l =>
+    !l.match(/^(Press release|Speech|News story|Guidance|From:|Published|Delivered on:)/) &&
+    !l.includes('cookie') && !l.includes('Cookie')
+  )
+  let simplified = contentLines.slice(0, 3).join(' ')
+  simplified = simplified
     .replace(/\b(pursuant to|in accordance with|notwithstanding)\b/gi, 'following')
     .replace(/\b(aforementioned|hereinafter)\b/gi, 'this')
     .replace(/\b(shall be entitled to)\b/gi, 'can')
@@ -106,16 +113,25 @@ function simplifyContentFallback(text: string): string {
     .replace(/\b(in the event that)\b/gi, 'if')
     .replace(/\b(for the purpose of)\b/gi, 'to')
     .replace(/\b(legislation|regulatory framework)\b/gi, 'rules')
-  if (simplified.length > 600) simplified = simplified.substring(0, 597) + '...'
+  if (simplified.length > 500) simplified = simplified.substring(0, 497) + '...'
   return simplified + ' 📋✨'
 }
 
 function extractKeyPointsFallback(text: string): string[] {
-  const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 30)
-  const unique = [...new Set(sentences.map(s => s.trim()))]
+  const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 40)
+  const contentLines = lines.filter(l =>
+    !l.match(/^(Press release|Speech|News story|Guidance|From:|Published)/) &&
+    !l.includes('cookie') && !l.includes('Cookie')
+  )
+  // Prefer bullet points if they exist
+  const bullets = contentLines.filter(l => l.startsWith('-') || l.startsWith('•'))
+  const source = bullets.length >= 3 ? bullets : contentLines
+  const unique = [...new Set(source)]
   return unique.slice(0, 4).map((s, i) => {
     const emojis = ['📌', '✅', '💡', '⚡']
-    return `${s.trim()}. ${emojis[i % emojis.length]}`
+    const clean = s.replace(/^[-•]\s*/, '')
+    const trimmed = clean.length > 200 ? clean.substring(0, 197) + '...' : clean
+    return `${trimmed} ${emojis[i % emojis.length]}`
   })
 }
 
