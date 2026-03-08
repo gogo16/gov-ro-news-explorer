@@ -267,12 +267,15 @@ function cleanText(text: string): string {
   return cleaned.trim()
 }
 
-// Validate that content is a real article, not a YouTube embed or navigation page
+// Validate that content is a real article, not a YouTube embed, listing page or navigation page
 function isValidArticleContent(text: string): boolean {
   const lower = text.toLowerCase()
   const invalidMarkers = ['youtube', 'vizionează mai târziu', 'watch later', 'enable javascript', 'verifying your browser']
   const markerCount = invalidMarkers.filter(m => lower.includes(m)).length
   if (markerCount >= 2) return false
+  // Detect listing pages (multiple "Tip: Comunicat de presă" entries)
+  const listingMatches = text.match(/Tip:\s*Comunicat de presă/gi)
+  if (listingMatches && listingMatches.length >= 3) return false
   // Must have at least 200 chars of actual content after cleaning
   if (text.length < 200) return false
   return true
