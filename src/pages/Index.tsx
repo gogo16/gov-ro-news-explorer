@@ -220,11 +220,11 @@ const Index = () => {
                       </div>
                     </div>
                     <div>
-                      <h4 className="font-semibold text-purple-700 mb-2 flex items-center gap-1"><Sparkles className="h-4 w-4" />{labels.keyPoints}</h4>
+                      <h4 className="font-semibold text-foreground mb-2 flex items-center gap-1"><Sparkles className="h-4 w-4 text-primary" />{labels.keyPoints}</h4>
                       <div className="space-y-2">
                         {article.detailedPoints.map((point, i) => (
-                          <div key={i} className="p-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-200">
-                            <p className="text-sm text-purple-800 leading-relaxed">• {point}</p>
+                          <div key={i} className="p-3 bg-secondary/50 rounded-lg border border-border">
+                            <p className="text-sm text-foreground leading-relaxed">• {point}</p>
                           </div>
                         ))}
                       </div>
