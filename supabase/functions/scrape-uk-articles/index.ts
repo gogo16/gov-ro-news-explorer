@@ -124,6 +124,9 @@ async function aiSimplify(title: string, content: string, language: string): Pro
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY')
     if (!LOVABLE_API_KEY) return null
 
+    // Rate limit: wait 3s before each AI call
+    await new Promise(r => setTimeout(r, 3000))
+
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!
 
