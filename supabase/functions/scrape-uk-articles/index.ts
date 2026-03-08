@@ -231,8 +231,10 @@ async function scrapeArticle(firecrawlKey: string, url: string): Promise<{
   const metadata = data.data?.metadata || data.metadata || {}
 
   if (!markdown || markdown.length < 100) return null
+  if (markdown.includes('Enable JavaScript') || markdown.includes('Verifying your browser')) return null
 
-  const cleaned = cleanText(markdown)
+  // Strip cookie banners from scraped content
+  const cleaned = cleanText(markdown).replace(/Cookies on GOV\.UK[\s\S]*?(?=\n[A-Z])/i, '').trim()
   const title = metadata.title || cleaned.split('\n')[0]?.substring(0, 200) || ''
 
   // Try to extract date from content or metadata
