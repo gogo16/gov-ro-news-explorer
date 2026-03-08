@@ -240,6 +240,7 @@ function cleanText(text: string): string {
     .replace(/\n{3,}/g, '\n\n')
 
   // Strip cookie banners (MAE, general RO sites)
+  cleaned = cleaned.replace(/^I agree!\s*/i, '')
   cleaned = cleaned.replace(/This website uses cookies[\s\S]*?Cookie Consent plugin for the EU cookie law\s*/gi, '')
   cleaned = cleaned.replace(/Acest site folosește cookies[\s\S]*?(?:politica de cookies|cookie policy)\s*/gi, '')
   // Strip YouTube embed boilerplate
