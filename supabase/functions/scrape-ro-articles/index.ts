@@ -358,13 +358,16 @@ Deno.serve(async (req) => {
           const now = new Date()
           const articleDate = article.date || `${now.getDate()} ${roMonths[now.getMonth()]} ${now.getFullYear()}`
 
+          // Try AI simplification, fallback to rule-based
+          const aiResult = await aiSimplify(article.title, article.content, 'ro')
+
           const { error: insertError } = await supabase.from('scraped_articles').insert({
             country: 'ro',
             source: source.id,
             title: article.title,
             original_content: article.content.substring(0, 3000),
-            simplified_content: simplifyContent(article.content),
-            detailed_points: extractKeyPoints(article.content),
+            simplified_content: aiResult?.simplified || simplifyContentFallback(article.content),
+            detailed_points: aiResult?.keyPoints || extractKeyPointsFallback(article.content),
             category,
             category_emoji: emoji,
             category_name: name,
