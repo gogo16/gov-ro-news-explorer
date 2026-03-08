@@ -229,6 +229,7 @@ async function discoverArticleUrls(firecrawlKey: string, source: typeof RO_SOURC
       url: source.listingUrl,
       formats: ['links'],
       onlyMainContent: true,
+      waitFor: 3000,
       location: { country: 'RO', languages: ['ro'] },
     }),
   })
