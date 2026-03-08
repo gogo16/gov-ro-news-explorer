@@ -1,0 +1,1 @@
+DELETE FROM scraped_articles WHERE simplified_content LIKE '%cookie%' OR simplified_content LIKE '%Cookie%' OR simplified_content LIKE '%Google Analytics%' OR detailed_points::text LIKE '%cookie%'
