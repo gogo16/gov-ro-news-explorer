@@ -36,6 +36,7 @@ const UK_SOURCES = [
 // Non-article URL patterns to skip
 const SKIP_PATTERNS = [
   /\/search\?/, /\/search\//, /\?order=/, /\?page=/, /#/,
+  /\?filter-/, /filter-keyword=/, /filter-category=/,
   /\/cookie/, /\/privacy/, /\/terms/, /\/accessibility/,
   /\/about/, /\/contact/, /\/help/, /\/feedback/,
   /\/organisations$/, /\/latest$/, /\/news\/?$/,
