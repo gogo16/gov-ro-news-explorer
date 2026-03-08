@@ -214,9 +214,9 @@ const Index = () => {
                     </div>
                     <Separator />
                     <div>
-                      <h4 className="font-semibold text-green-700 mb-2 flex items-center gap-1"><Sparkles className="h-4 w-4" />{labels.simplified}</h4>
-                      <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
-                        <p className="text-sm text-green-800 leading-relaxed">{article.simplifiedContent}</p>
+                      <h4 className="font-semibold text-green-700 dark:text-green-400 mb-2 flex items-center gap-1"><Sparkles className="h-4 w-4" />{labels.simplified}</h4>
+                      <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 rounded-lg border border-green-200 dark:border-green-800">
+                        <p className="text-sm text-green-800 dark:text-green-300 leading-relaxed">{article.simplifiedContent}</p>
                       </div>
                     </div>
                     <div>
