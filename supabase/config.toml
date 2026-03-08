@@ -1,1 +1,4 @@
 project_id = "efcbwzcaddbniqxgxuxm"
+
+[functions.scrape-uk-articles]
+verify_jwt = false

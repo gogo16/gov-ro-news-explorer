@@ -14,7 +14,93 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      scraped_articles: {
+        Row: {
+          article_date: string
+          category: string
+          category_emoji: string
+          category_name: string
+          country: string
+          created_at: string
+          detailed_points: string[]
+          id: string
+          interests: string[]
+          original_content: string
+          scraped_at: string
+          simplified_content: string
+          source: string
+          tags: string[]
+          title: string
+          url: string
+        }
+        Insert: {
+          article_date: string
+          category?: string
+          category_emoji?: string
+          category_name?: string
+          country?: string
+          created_at?: string
+          detailed_points?: string[]
+          id?: string
+          interests?: string[]
+          original_content?: string
+          scraped_at?: string
+          simplified_content?: string
+          source: string
+          tags?: string[]
+          title: string
+          url: string
+        }
+        Update: {
+          article_date?: string
+          category?: string
+          category_emoji?: string
+          category_name?: string
+          country?: string
+          created_at?: string
+          detailed_points?: string[]
+          id?: string
+          interests?: string[]
+          original_content?: string
+          scraped_at?: string
+          simplified_content?: string
+          source?: string
+          tags?: string[]
+          title?: string
+          url?: string
+        }
+        Relationships: []
+      }
+      scraper_runs: {
+        Row: {
+          articles_found: number | null
+          completed_at: string | null
+          errors: string[] | null
+          id: string
+          sources_scraped: string[] | null
+          started_at: string
+          status: string
+        }
+        Insert: {
+          articles_found?: number | null
+          completed_at?: string | null
+          errors?: string[] | null
+          id?: string
+          sources_scraped?: string[] | null
+          started_at?: string
+          status?: string
+        }
+        Update: {
+          articles_found?: number | null
+          completed_at?: string | null
+          errors?: string[] | null
+          id?: string
+          sources_scraped?: string[] | null
+          started_at?: string
+          status?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

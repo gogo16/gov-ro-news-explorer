@@ -17,6 +17,7 @@ import ArticleTagBadge from "@/components/ArticleTagBadge";
 import { filterArticles, highlightLegalTerms, removeDiacritics } from "@/utils/textProcessing";
 import { Country, Website } from "@/data/countryConfig";
 import { useAppData } from "@/context/AppDataContext";
+import { useScrapedArticles } from "@/hooks/useScrapedArticles";
 
 const Index = () => {
   const [country, setCountry] = useState<Country>('ro');
@@ -49,7 +50,10 @@ const Index = () => {
     return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
   };
 
-  const articles = config.articles;
+  const { data: dbArticles } = useScrapedArticles(country);
+
+  // Merge static config articles with database articles
+  const articles = [...config.articles, ...(dbArticles || [])];
 
   const websites: Website[] = config.websites.map(w => ({
     ...w,

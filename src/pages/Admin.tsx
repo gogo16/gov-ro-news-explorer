@@ -12,7 +12,8 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Globe, Sparkles, FileText, Calendar as CalendarIcon, Tag, Edit, Trash2, Plus, LogOut, Check, X, Pencil, Settings } from "lucide-react";
+import { Globe, Sparkles, FileText, Calendar as CalendarIcon, Tag, Edit, Trash2, Plus, LogOut, Check, X, Pencil, Settings, RefreshCw, Loader2, Zap } from "lucide-react";
+import { useTriggerScrape, useScrapedArticles, useLatestScrapeRun } from "@/hooks/useScrapedArticles";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import WebsiteMenu from "@/components/WebsiteMenu";
@@ -73,6 +74,9 @@ const Admin = () => {
   const { toast } = useToast();
   const appData = useAppData();
   const config = useMemo(() => appData.getData(country), [appData, country]);
+  const triggerScrape = useTriggerScrape();
+  const { data: scrapedArticles } = useScrapedArticles(country);
+  const { data: latestRun } = useLatestScrapeRun();
 
   // Page state (same as Index)
   const [selectedWebsite, setSelectedWebsite] = useState<string>('all');
@@ -247,6 +251,27 @@ const Admin = () => {
           <Button size="sm" variant="ghost" className="text-white hover:bg-white/20 text-xs" onClick={() => setManageDialogOpen('subjects')}>📌 Subjects</Button>
           <Button size="sm" variant="ghost" className="text-white hover:bg-white/20 text-xs" onClick={() => setManageDialogOpen('interests')}>💡 Interests</Button>
           <Button size="sm" variant="ghost" className="text-white hover:bg-white/20 text-xs" onClick={() => setManageDialogOpen('texts')}>✏️ Page Texts</Button>
+          <Separator orientation="vertical" className="h-6 bg-white/30" />
+          <Button
+            size="sm"
+            variant="ghost"
+            className="text-white hover:bg-white/20 text-xs gap-1"
+            disabled={triggerScrape.isPending}
+            onClick={() => {
+              triggerScrape.mutate(undefined, {
+                onSuccess: (data) => toast({ title: '🔄 Scrape complete', description: `Found ${data?.articles_found || 0} new articles` }),
+                onError: (err) => toast({ title: 'Scrape failed', description: err.message, variant: 'destructive' }),
+              });
+            }}
+          >
+            {triggerScrape.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Zap className="h-3 w-3" />}
+            Scrape UK
+          </Button>
+          {latestRun && (
+            <span className="text-xs opacity-70">
+              Last: {latestRun.status} ({latestRun.articles_found} articles)
+            </span>
+          )}
           <Separator orientation="vertical" className="h-6 bg-white/30" />
           <Button size="sm" variant="ghost" className="text-white hover:bg-white/20" onClick={handleLogout}><LogOut className="h-4 w-4 mr-1" /> Logout</Button>
         </div>
