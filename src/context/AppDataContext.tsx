@@ -164,6 +164,7 @@ export const AppDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
   );
 };
 
+// Hook to access shared app data
 export const useAppData = () => {
   const ctx = useContext(AppDataContext);
   if (!ctx) throw new Error('useAppData must be used within AppDataProvider');
