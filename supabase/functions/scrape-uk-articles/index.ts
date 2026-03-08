@@ -165,10 +165,12 @@ Deno.serve(async (req) => {
           const lines = block.split('\n').filter((l: string) => l.trim())
           if (lines.length < 2) continue
 
-          const title = lines[0].replace(/[\[\]#*]/g, '').trim()
+          // Clean markdown links from title: "Title(https://...)" → "Title"
+          const title = lines[0].replace(/[\[\]#*]/g, '').replace(/\(https?:\/\/[^\)]+\)/g, '').trim()
           if (!title || title.length < 10) continue
 
-          const content = lines.slice(1).join(' ').replace(/[\[\]#*]/g, '').trim()
+          // Clean markdown links and artifacts from content
+          const content = lines.slice(1).join(' ').replace(/[\[\]#*]/g, '').replace(/\(https?:\/\/[^\)]+\)/g, '').replace(/!\S+/g, '').trim()
           if (content.length < 30) continue
 
           // Extract URL from markdown links in the block
