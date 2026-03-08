@@ -155,20 +155,32 @@ const WORD_REPLACEMENTS: Record<string, string> = {
 }
 
 function simplifyContentFallback(text: string): string {
-  let simplified = text
+  // Extract meaningful content: skip headers, get first substantial paragraph
+  const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 50)
+  // Skip lines that look like metadata (dates, types, navigation)
+  const contentLines = lines.filter(l => 
+    !l.startsWith('Tip:') && !l.startsWith('Data:') && !l.match(/^(Select|An:|Lună:)/) &&
+    !l.match(/^- \d+ -/) && !l.includes('Legături rapide') && !l.includes('Centrul de presă')
+  )
+  let simplified = contentLines.slice(0, 3).join(' ')
   for (const [term, replacement] of Object.entries(WORD_REPLACEMENTS)) {
     simplified = simplified.replace(new RegExp(term, 'gi'), replacement)
   }
-  if (simplified.length > 600) simplified = simplified.substring(0, 597) + '...'
+  if (simplified.length > 500) simplified = simplified.substring(0, 497) + '...'
   return simplified + ' 🇷🇴✨'
 }
 
 function extractKeyPointsFallback(text: string): string[] {
-  const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 30)
-  const unique = [...new Set(sentences.map(s => s.trim()))]
+  const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 40)
+  const contentLines = lines.filter(l => 
+    !l.includes('cookie') && !l.includes('Cookie') && !l.includes('Legături rapide') &&
+    !l.match(/^(Select|An:|Lună:|Tip:|Data:)/) && !l.match(/^- \d+ -/)
+  )
+  const unique = [...new Set(contentLines)]
   return unique.slice(0, 4).map((s, i) => {
     const emojis = ['📌', '✅', '💡', '⚡']
-    return `${s.trim()}. ${emojis[i % emojis.length]}`
+    const trimmed = s.length > 200 ? s.substring(0, 197) + '...' : s
+    return `${trimmed} ${emojis[i % emojis.length]}`
   })
 }
 
