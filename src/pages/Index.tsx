@@ -119,11 +119,11 @@ const Index = () => {
 
         <div className="text-center space-y-4">
           <div className="flex items-center justify-center gap-3 mb-4">
-            <Globe className="h-10 w-10 text-blue-600" />
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            <Globe className="h-10 w-10 text-primary" />
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent-foreground bg-clip-text text-transparent">
               Friendly GOV {config.flag}
             </h1>
-            <Sparkles className="h-10 w-10 text-purple-600" />
+            <Sparkles className="h-10 w-10 text-primary" />
           </div>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">{labels.subtitle}</p>
           <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
