@@ -228,7 +228,7 @@ Deno.serve(async (req) => {
           if (!title || title.length < 10) continue
 
           // Skip non-article content
-          const skipPatterns = ['cookie', 'navigare', 'meniu', 'footer', 'sidebar', 'search', 'căutare']
+          const skipPatterns = ['cookie', 'navigare', 'meniu', 'footer', 'sidebar', 'search', 'căutare', 'skip to content', 'sari la conținut', 'stai în legătură', 'răspundem', 'prim-miniștri', 'contact', 'login', 'autentificare', 'abonare', 'newsletter', 'urmăriți', 'social media', 'despre noi', 'hartă site', 'politica de', 'termeni și condiții']
           if (skipPatterns.some(p => title.toLowerCase().includes(p))) continue
 
           // Clean content
