@@ -207,7 +207,7 @@ async function aiSimplify(title: string, content: string, language: string): Pro
 }
 
 function cleanText(text: string): string {
-  return text
+  let cleaned = text
     .replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1')
     .replace(/\(https?:\/\/[^\)]+\)/g, '')
     .replace(/!\[([^\]]*)\]\([^\)]+\)/g, '')
@@ -216,7 +216,29 @@ function cleanText(text: string): string {
     .replace(/\|/g, ' ')
     .replace(/-{3,}/g, '')
     .replace(/\n{3,}/g, '\n\n')
-    .trim()
+
+  // Strip YouTube embed boilerplate
+  cleaned = cleaned.replace(/Sari la conținut[\s\S]*?YouTube[\s\S]*?(?:AnuleazăConfirmă|Vizionează pe)/gi, '')
+  cleaned = cleaned.replace(/Skip to content[\s\S]*?YouTube[\s\S]*?(?:Cancel|Watch on)/gi, '')
+  // Strip navigation/footer boilerplate
+  cleaned = cleaned.replace(/Alte articole:[\s\S]*$/i, '')
+  cleaned = cleaned.replace(/Share on Facebook[\s\S]*$/i, '')
+  // Strip image placeholders
+  cleaned = cleaned.replace(/!\[\]/g, '')
+  cleaned = cleaned.replace(/!\[[^\]]*\]/g, '')
+
+  return cleaned.trim()
+}
+
+// Validate that content is a real article, not a YouTube embed or navigation page
+function isValidArticleContent(text: string): boolean {
+  const lower = text.toLowerCase()
+  const invalidMarkers = ['youtube', 'vizionează mai târziu', 'watch later', 'enable javascript', 'verifying your browser']
+  const markerCount = invalidMarkers.filter(m => lower.includes(m)).length
+  if (markerCount >= 2) return false
+  // Must have at least 200 chars of actual content after cleaning
+  if (text.length < 200) return false
+  return true
 }
 
 async function discoverArticleUrls(firecrawlKey: string, source: typeof RO_SOURCES[0]): Promise<string[]> {
