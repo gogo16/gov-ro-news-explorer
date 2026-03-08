@@ -8,6 +8,9 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { ArrowLeft, Calendar, Globe, Sparkles, FileText, Tag, ChevronDown, ExternalLink } from 'lucide-react';
 import ArticleTagBadge from '@/components/ArticleTagBadge';
 import ThemeToggle from '@/components/ThemeToggle';
+import ELI5Chat from '@/components/ELI5Chat';
+import TextToSpeech from '@/components/TextToSpeech';
+import ShareImageCard from '@/components/ShareImageCard';
 import { useAppData } from '@/context/AppDataContext';
 import { useScrapedArticles } from '@/hooks/useScrapedArticles';
 import type { ScrapedArticle, Country } from '@/data/countryConfig';
