@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.scrape-ro-articles]
 verify_jwt = false
+
+[functions.eli5-chat]
+verify_jwt = false

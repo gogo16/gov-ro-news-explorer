@@ -205,6 +205,13 @@ const ArticlePage: React.FC = () => {
             </section>
           )}
         </div>
+
+        {/* ELI5 Chat */}
+        <ELI5Chat
+          articleTitle={article.title}
+          articleContent={article.originalContent}
+          language={country === 'ro' ? 'ro' : 'en'}
+        />
       </div>
     </>
   );
