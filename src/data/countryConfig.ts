@@ -1,4 +1,4 @@
-import { Building, Shield, Hospital, FileText, Landmark, Scale, Briefcase, Home, GraduationCap, Heart } from "lucide-react";
+import { Building, Shield, Hospital, FileText, Landmark, Scale, Briefcase, Home, GraduationCap, Heart, Wheat, Globe2 } from "lucide-react";
 
 export type Country = 'ro' | 'uk';
 
