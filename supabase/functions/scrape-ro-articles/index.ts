@@ -298,6 +298,7 @@ async function scrapeArticle(firecrawlKey: string, url: string): Promise<{
       url,
       formats: ['markdown'],
       onlyMainContent: true,
+      waitFor: 5000,
       location: { country: 'RO', languages: ['ro'] },
     }),
   })
