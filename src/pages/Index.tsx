@@ -248,6 +248,8 @@ const Index = () => {
             </div>
           )}
         </div>
+
+        <NewsletterSignup interests={config.interests} country={country} />
       </div>
     </div>
   );
