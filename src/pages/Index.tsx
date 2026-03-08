@@ -199,7 +199,9 @@ const Index = () => {
                         <Badge variant="secondary" className="text-sm"><Tag className="h-3 w-3 mr-1" />{article.categoryEmoji} {article.categoryName}</Badge>
                         {article.tags.map(tag => <ArticleTagBadge key={tag} tag={tag} labels={labels} />)}
                       </div>
-                      <CardTitle className="text-lg text-foreground leading-tight">{renderTextWithTooltips(article.title)}</CardTitle>
+                      <Link to={`/article/${article.id}`}>
+                        <CardTitle className="text-lg text-foreground leading-tight hover:text-primary transition-colors cursor-pointer">{renderTextWithTooltips(article.title)}</CardTitle>
+                      </Link>
                       <CardDescription className="flex items-center gap-2"><CalendarIcon className="h-4 w-4" />{article.date}</CardDescription>
                     </div>
                   </CardHeader>
