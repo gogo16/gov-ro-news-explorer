@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { FileText } from 'lucide-react';
 import { Country, CountryConfig, ScrapedArticle, ArticleTag, romaniaConfig, ukConfig } from '@/data/countryConfig';
 
 interface AppData {
