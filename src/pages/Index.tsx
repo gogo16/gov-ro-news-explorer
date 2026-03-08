@@ -7,7 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Globe, Sparkles, FileText, Calendar as CalendarIcon, Tag } from "lucide-react";
+import { Globe, Sparkles, FileText, Calendar as CalendarIcon, Tag, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import WebsiteMenu from "@/components/WebsiteMenu";
 import SearchAndFilters from "@/components/SearchAndFilters";
@@ -21,6 +21,8 @@ import { Country, Website } from "@/data/countryConfig";
 import { useAppData } from "@/context/AppDataContext";
 import { useScrapedArticles } from "@/hooks/useScrapedArticles";
 
+const ARTICLES_PER_PAGE = 4;
+
 const Index = () => {
   const [country, setCountry] = useState<Country>('ro');
   const appData = useAppData();
@@ -33,6 +35,7 @@ const Index = () => {
   const [documentType, setDocumentType] = useState<string>("all");
   const [subject, setSubject] = useState<string>("all");
   const [interest, setInterest] = useState<string>("");
+  const [currentPage, setCurrentPage] = useState(0);
 
   useEffect(() => {
     setSelectedWebsite('all');
@@ -41,8 +44,14 @@ const Index = () => {
     setDocumentType("all");
     setSubject("all");
     setInterest("");
+    setCurrentPage(0);
     setLastUpdateTime(new Date().toLocaleString(config.dateLocale));
   }, [country]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [selectedWebsite, selectedDate, searchTerm, documentType, subject, interest]);
 
   const formatDate = (date: Date) => {
     if (country === 'ro') {
@@ -54,7 +63,6 @@ const Index = () => {
 
   const { data: dbArticles } = useScrapedArticles(country);
 
-  // Merge static config articles with database articles
   const articles = [...config.articles, ...(dbArticles || [])];
 
   const websites: Website[] = config.websites.map(w => ({
@@ -88,7 +96,13 @@ const Index = () => {
       if (aN !== bN) return aN ? -1 : 1;
       return 0;
     });
-  }, [config, selectedWebsite, selectedDate, searchTerm, documentType, subject, interest]);
+  }, [config, selectedWebsite, selectedDate, searchTerm, documentType, subject, interest, dbArticles]);
+
+  const totalPages = Math.ceil(sortedArticles.length / ARTICLES_PER_PAGE);
+  const paginatedArticles = sortedArticles.slice(
+    currentPage * ARTICLES_PER_PAGE,
+    (currentPage + 1) * ARTICLES_PER_PAGE
+  );
 
   const hasActiveFilters = searchTerm !== "" || documentType !== "all" || subject !== "all" || interest !== "";
 
@@ -170,19 +184,45 @@ const Index = () => {
           </CardContent>
         </Card>
 
-        <div className="grid gap-6">
-          <div className="flex items-center gap-2">
-            <FileText className="h-6 w-6 text-blue-600" />
-            <h2 className="text-2xl font-bold text-foreground">
-              {labels.articles}
-              {selectedWebsite !== 'all' && <span className="ml-2 text-lg text-muted-foreground">- {websites.find(w => w.id === selectedWebsite)?.name}</span>}
-              {selectedDate && <span className="ml-2 text-lg text-muted-foreground">- {formatDate(selectedDate)}</span>}
-            </h2>
-            <Badge variant="outline" className="ml-2">{labels.articleCount(sortedArticles.length)}</Badge>
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <FileText className="h-6 w-6 text-primary" />
+              <h2 className="text-2xl font-bold text-foreground">
+                {labels.articles}
+                {selectedWebsite !== 'all' && <span className="ml-2 text-lg text-muted-foreground">- {websites.find(w => w.id === selectedWebsite)?.name}</span>}
+                {selectedDate && <span className="ml-2 text-lg text-muted-foreground">- {formatDate(selectedDate)}</span>}
+              </h2>
+              <Badge variant="outline" className="ml-2">{labels.articleCount(sortedArticles.length)}</Badge>
+            </div>
+
+            {totalPages > 1 && (
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
+                  disabled={currentPage === 0}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="text-sm text-muted-foreground min-w-[80px] text-center">
+                  {currentPage + 1} / {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))}
+                  disabled={currentPage >= totalPages - 1}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
           </div>
 
-          <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
-            {sortedArticles.map(article => {
+          <div className="grid gap-6 md:grid-cols-2">
+            {paginatedArticles.map(article => {
               const sourceWebsite = websites.find(w => w.id === article.source);
               const hasUrgent = article.tags.includes('urgent');
               return (
@@ -239,6 +279,43 @@ const Index = () => {
               );
             })}
           </div>
+
+          {/* Bottom pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 pt-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
+                disabled={currentPage === 0}
+              >
+                <ChevronLeft className="h-4 w-4 mr-1" />
+                {country === 'ro' ? 'Anterior' : 'Previous'}
+              </Button>
+              <div className="flex items-center gap-1">
+                {Array.from({ length: totalPages }, (_, i) => (
+                  <Button
+                    key={i}
+                    variant={i === currentPage ? "default" : "outline"}
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => setCurrentPage(i)}
+                  >
+                    {i + 1}
+                  </Button>
+                ))}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))}
+                disabled={currentPage >= totalPages - 1}
+              >
+                {country === 'ro' ? 'Următor' : 'Next'}
+                <ChevronRight className="h-4 w-4 ml-1" />
+              </Button>
+            </div>
+          )}
 
           {sortedArticles.length === 0 && (
             <div className="text-center py-12">

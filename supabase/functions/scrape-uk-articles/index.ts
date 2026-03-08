@@ -13,7 +13,6 @@ const UK_SOURCES = [
     id: 'govuk',
     name: 'GOV.UK',
     listingUrl: 'https://www.gov.uk/search/news-and-communications?order=updated-newest',
-    // Pattern to match actual article URLs (not navigation/search pages)
     articlePattern: /^https:\/\/www\.gov\.uk\/government\/(news|publications|speeches|consultations|statistics)\//,
     fallbackPattern: /^https:\/\/www\.gov\.uk\/(government\/|guidance\/)/,
   },
@@ -30,6 +29,20 @@ const UK_SOURCES = [
     listingUrl: 'https://www.england.nhs.uk/news/',
     articlePattern: /^https:\/\/www\.england\.nhs\.uk\/\d{4}\/\d{2}\//,
     fallbackPattern: /^https:\/\/www\.england\.nhs\.uk\//,
+  },
+  {
+    id: 'dwp',
+    name: 'DWP',
+    listingUrl: 'https://www.gov.uk/search/news-and-communications?organisations%5B%5D=department-for-work-pensions&order=updated-newest',
+    articlePattern: /^https:\/\/www\.gov\.uk\/government\/(news|publications|speeches|consultations|statistics)\//,
+    fallbackPattern: /^https:\/\/www\.gov\.uk\/(government\/|guidance\/)/,
+  },
+  {
+    id: 'ofsted',
+    name: 'Ofsted',
+    listingUrl: 'https://www.gov.uk/search/news-and-communications?organisations%5B%5D=ofsted&order=updated-newest',
+    articlePattern: /^https:\/\/www\.gov\.uk\/government\/(news|publications|speeches|consultations|statistics)\//,
+    fallbackPattern: /^https:\/\/www\.gov\.uk\/(government\/|guidance\/)/,
   },
 ]
 
