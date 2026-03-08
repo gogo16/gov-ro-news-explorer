@@ -253,9 +253,10 @@ async function scrapeArticle(firecrawlKey: string, url: string): Promise<{
   if (!markdown || markdown.length < 100) return null
   if (markdown.includes('Enable JavaScript') || markdown.includes('Verifying your browser')) return null
 
-  // Strip cookie banners from scraped content
-  const cleaned = cleanText(markdown).replace(/Cookies on GOV\.UK[\s\S]*?(?=\n[A-Z])/i, '').trim()
-  const title = metadata.title || cleaned.split('\n')[0]?.substring(0, 200) || ''
+  // Clean all boilerplate
+  const cleaned = cleanText(markdown)
+  if (!cleaned || cleaned.length < 100) return null
+  const title = cleanText(metadata.title || cleaned.split('\n')[0]?.substring(0, 200) || '')
 
   // Try to extract date from content or metadata
   const dateMatch = cleaned.match(/(\d{1,2}\s+(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{4})/i)
