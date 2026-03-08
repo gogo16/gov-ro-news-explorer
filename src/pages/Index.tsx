@@ -188,8 +188,8 @@ const Index = () => {
               return (
                 <Card key={article.id} className={cn(
                   'transition-all duration-300 hover:shadow-xl border',
-                  hasUrgent && 'border-2 border-red-400 shadow-lg bg-red-50/50',
-                  !hasUrgent && article.tags.includes('new') && 'border-2 border-green-400 shadow-lg bg-green-50/50',
+                  hasUrgent && 'border-2 border-destructive shadow-lg bg-destructive/5',
+                  !hasUrgent && article.tags.includes('new') && 'border-2 border-green-400 dark:border-green-600 shadow-lg bg-green-50/50 dark:bg-green-950/20',
                   !hasUrgent && !article.tags.includes('new') && 'border-border'
                 )}>
                   <CardHeader>
