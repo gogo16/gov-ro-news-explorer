@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      newsletter_signups: {
+        Row: {
+          confirmed: boolean
+          country: string
+          created_at: string
+          email: string
+          id: string
+          interests: string[]
+        }
+        Insert: {
+          confirmed?: boolean
+          country?: string
+          created_at?: string
+          email: string
+          id?: string
+          interests?: string[]
+        }
+        Update: {
+          confirmed?: boolean
+          country?: string
+          created_at?: string
+          email?: string
+          id?: string
+          interests?: string[]
+        }
+        Relationships: []
+      }
       scraped_articles: {
         Row: {
           article_date: string
