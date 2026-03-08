@@ -1,0 +1,1 @@
+DELETE FROM scraped_articles WHERE original_content LIKE '%We use some essential cookies%' OR original_content LIKE '%Sari la conținut%Skip to content%' OR simplified_content LIKE '%cookie%We use%'

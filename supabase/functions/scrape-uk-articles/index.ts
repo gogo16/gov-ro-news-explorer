@@ -120,40 +120,50 @@ function extractKeyPointsFallback(text: string): string[] {
 }
 
 async function aiSimplify(title: string, content: string, language: string): Promise<{ simplified: string; keyPoints: string[] } | null> {
-  try {
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY')
-    if (!LOVABLE_API_KEY) return null
+  const maxRetries = 2
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY')
+      if (!LOVABLE_API_KEY) return null
 
-    // Rate limit: wait 3s before each AI call
-    await new Promise(r => setTimeout(r, 3000))
+      // Rate limit: wait 5s before each AI call (longer on retries)
+      await new Promise(r => setTimeout(r, 5000 + attempt * 5000))
 
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!
+      const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+      const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!
 
-    const response = await fetch(`${supabaseUrl}/functions/v1/simplify-article`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${supabaseAnonKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ title, content, language }),
-    })
+      const response = await fetch(`${supabaseUrl}/functions/v1/simplify-article`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${supabaseAnonKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ title, content, language }),
+      })
 
-    if (!response.ok) {
-      console.error(`AI simplify failed: ${response.status}`)
+      if (response.status === 429 && attempt < maxRetries) {
+        console.log(`AI rate limited, retry ${attempt + 1}/${maxRetries}...`)
+        continue
+      }
+
+      if (!response.ok) {
+        console.error(`AI simplify failed: ${response.status}`)
+        return null
+      }
+
+      const data = await response.json()
+      if (data.simplified && data.keyPoints) return data
+      return null
+    } catch (err) {
+      console.error('AI simplify error:', err)
+      if (attempt < maxRetries) continue
       return null
     }
-
-    const data = await response.json()
-    if (data.simplified && data.keyPoints) return data
-    return null
-  } catch (err) {
-    console.error('AI simplify error:', err)
-    return null
   }
+  return null
 }
 
-// Clean markdown artifacts from text
+// Clean markdown artifacts and cookie/navigation boilerplate from text
 function cleanText(text: string): string {
   let cleaned = text
     .replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1')
@@ -165,13 +175,24 @@ function cleanText(text: string): string {
     .replace(/-{3,}/g, '')
     .replace(/\n{3,}/g, '\n\n')
 
-  // Strip cookie banners (GOV.UK, NHS)
-  cleaned = cleaned.replace(/Skip to main content[\s\S]*?(?:analytics cookies|I'm OK with analytics cookies)/gi, '')
-  cleaned = cleaned.replace(/Cookies on (?:GOV\.UK|the NHS England website)[\s\S]*?(?:analytics cookies|before you choose\.)/gi, '')
+  // Aggressively strip GOV.UK / NHS cookie banners - everything before actual content
+  // Pattern: starts with cookie text, ends right before the article type (Press release, Speech, News story, etc.)
+  cleaned = cleaned.replace(/^[\s\S]*?(?:Accept additional cookies\s*Reject additional cookies[\s\S]*?Hide cookie message\s*)/i, '')
+  cleaned = cleaned.replace(/^[\s\S]*?(?:I'm OK with analytics cookies\s*)/i, '')
+  cleaned = cleaned.replace(/We use some essential cookies[\s\S]*?(?:Hide cookie message|before you choose\.)\s*/gi, '')
+  cleaned = cleaned.replace(/Cookies on (?:GOV\.UK|the NHS England website)[\s\S]*?(?:Hide cookie message|before you choose\.)\s*/gi, '')
+  
+  // Strip "Skip to main content"
+  cleaned = cleaned.replace(/^Skip to (?:main )?content\s*/i, '')
+  
   // Strip "Share on" footers
   cleaned = cleaned.replace(/Share on Facebook[\s\S]*$/i, '')
-  // Strip navigation boilerplate
-  cleaned = cleaned.replace(/^Skip to (?:main )?content\s*/i, '')
+  
+  // Strip "From:" metadata lines
+  cleaned = cleaned.replace(/From:[\s\S]*?Published\d{1,2}\s+\w+\s+\d{4}\s*/gi, '')
+  
+  // Strip image placeholders
+  cleaned = cleaned.replace(/!\[\]\s*/g, '')
 
   return cleaned.trim()
 }
@@ -242,9 +263,10 @@ async function scrapeArticle(firecrawlKey: string, url: string): Promise<{
   if (!markdown || markdown.length < 100) return null
   if (markdown.includes('Enable JavaScript') || markdown.includes('Verifying your browser')) return null
 
-  // Strip cookie banners from scraped content
-  const cleaned = cleanText(markdown).replace(/Cookies on GOV\.UK[\s\S]*?(?=\n[A-Z])/i, '').trim()
-  const title = metadata.title || cleaned.split('\n')[0]?.substring(0, 200) || ''
+  // Clean all boilerplate
+  const cleaned = cleanText(markdown)
+  if (!cleaned || cleaned.length < 100) return null
+  const title = cleanText(metadata.title || cleaned.split('\n')[0]?.substring(0, 200) || '')
 
   // Try to extract date from content or metadata
   const dateMatch = cleaned.match(/(\d{1,2}\s+(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{4})/i)
