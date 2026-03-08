@@ -153,7 +153,7 @@ async function aiSimplify(title: string, content: string, language: string): Pro
   }
 }
 
-// Clean markdown artifacts from text
+// Clean markdown artifacts and cookie/navigation boilerplate from text
 function cleanText(text: string): string {
   let cleaned = text
     .replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1')
@@ -165,13 +165,24 @@ function cleanText(text: string): string {
     .replace(/-{3,}/g, '')
     .replace(/\n{3,}/g, '\n\n')
 
-  // Strip cookie banners (GOV.UK, NHS)
-  cleaned = cleaned.replace(/Skip to main content[\s\S]*?(?:analytics cookies|I'm OK with analytics cookies)/gi, '')
-  cleaned = cleaned.replace(/Cookies on (?:GOV\.UK|the NHS England website)[\s\S]*?(?:analytics cookies|before you choose\.)/gi, '')
+  // Aggressively strip GOV.UK / NHS cookie banners - everything before actual content
+  // Pattern: starts with cookie text, ends right before the article type (Press release, Speech, News story, etc.)
+  cleaned = cleaned.replace(/^[\s\S]*?(?:Accept additional cookies\s*Reject additional cookies[\s\S]*?Hide cookie message\s*)/i, '')
+  cleaned = cleaned.replace(/^[\s\S]*?(?:I'm OK with analytics cookies\s*)/i, '')
+  cleaned = cleaned.replace(/We use some essential cookies[\s\S]*?(?:Hide cookie message|before you choose\.)\s*/gi, '')
+  cleaned = cleaned.replace(/Cookies on (?:GOV\.UK|the NHS England website)[\s\S]*?(?:Hide cookie message|before you choose\.)\s*/gi, '')
+  
+  // Strip "Skip to main content"
+  cleaned = cleaned.replace(/^Skip to (?:main )?content\s*/i, '')
+  
   // Strip "Share on" footers
   cleaned = cleaned.replace(/Share on Facebook[\s\S]*$/i, '')
-  // Strip navigation boilerplate
-  cleaned = cleaned.replace(/^Skip to (?:main )?content\s*/i, '')
+  
+  // Strip "From:" metadata lines
+  cleaned = cleaned.replace(/From:[\s\S]*?Published\d{1,2}\s+\w+\s+\d{4}\s*/gi, '')
+  
+  // Strip image placeholders
+  cleaned = cleaned.replace(/!\[\]\s*/g, '')
 
   return cleaned.trim()
 }

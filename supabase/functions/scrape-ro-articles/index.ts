@@ -223,9 +223,12 @@ function cleanText(text: string): string {
   // Strip navigation/footer boilerplate
   cleaned = cleaned.replace(/Alte articole:[\s\S]*$/i, '')
   cleaned = cleaned.replace(/Share on Facebook[\s\S]*$/i, '')
+  cleaned = cleaned.replace(/ULTIMA ORĂ[\s\S]*$/i, '')
   // Strip image placeholders
   cleaned = cleaned.replace(/!\[\]/g, '')
   cleaned = cleaned.replace(/!\[[^\]]*\]/g, '')
+  // Strip "Scroll back to top"
+  cleaned = cleaned.replace(/Scroll back to top\s*/gi, '')
 
   return cleaned.trim()
 }
