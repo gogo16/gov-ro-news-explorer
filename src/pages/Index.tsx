@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,9 +12,10 @@ import { cn } from "@/lib/utils";
 import WebsiteMenu from "@/components/WebsiteMenu";
 import SearchAndFilters from "@/components/SearchAndFilters";
 import LegalTermTooltip from "@/components/LegalTermTooltip";
-import InterestFilter from "@/components/InterestFilter";
 import CountrySwitcher from "@/components/CountrySwitcher";
 import ArticleTagBadge from "@/components/ArticleTagBadge";
+import ThemeToggle from "@/components/ThemeToggle";
+import NewsletterSignup from "@/components/NewsletterSignup";
 import { filterArticles, highlightLegalTerms, removeDiacritics } from "@/utils/textProcessing";
 import { Country, Website } from "@/data/countryConfig";
 import { useAppData } from "@/context/AppDataContext";
