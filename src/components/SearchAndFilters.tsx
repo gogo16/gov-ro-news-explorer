@@ -51,8 +51,8 @@ const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
   interestSuggestions,
 }) => {
   return (
-    <Card className="border-2 border-blue-200 shadow-lg">
-      <CardHeader className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-t-lg">
+    <Card className="border-2 border-border shadow-lg">
+      <CardHeader className="bg-gradient-to-r from-primary to-accent-foreground text-primary-foreground rounded-t-lg">
         <CardTitle className="flex items-center gap-2">
           <Search className="h-5 w-5" />
           {labels.searchTitle}

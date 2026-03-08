@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,9 +12,10 @@ import { cn } from "@/lib/utils";
 import WebsiteMenu from "@/components/WebsiteMenu";
 import SearchAndFilters from "@/components/SearchAndFilters";
 import LegalTermTooltip from "@/components/LegalTermTooltip";
-import InterestFilter from "@/components/InterestFilter";
 import CountrySwitcher from "@/components/CountrySwitcher";
 import ArticleTagBadge from "@/components/ArticleTagBadge";
+import ThemeToggle from "@/components/ThemeToggle";
+import NewsletterSignup from "@/components/NewsletterSignup";
 import { filterArticles, highlightLegalTerms, removeDiacritics } from "@/utils/textProcessing";
 import { Country, Website } from "@/data/countryConfig";
 import { useAppData } from "@/context/AppDataContext";
@@ -108,19 +110,20 @@ const Index = () => {
   const labels = config.labels;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-4 md:p-6">
+    <div className="min-h-screen bg-background p-4 md:p-6">
       <div className="max-w-7xl mx-auto space-y-8">
-        <div className="flex justify-center">
+        <div className="flex items-center justify-between">
           <CountrySwitcher country={country} onCountryChange={setCountry} />
+          <ThemeToggle />
         </div>
 
         <div className="text-center space-y-4">
           <div className="flex items-center justify-center gap-3 mb-4">
-            <Globe className="h-10 w-10 text-blue-600" />
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            <Globe className="h-10 w-10 text-primary" />
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent-foreground bg-clip-text text-transparent">
               Friendly GOV {config.flag}
             </h1>
-            <Sparkles className="h-10 w-10 text-purple-600" />
+            <Sparkles className="h-10 w-10 text-primary" />
           </div>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">{labels.subtitle}</p>
           <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
@@ -139,10 +142,10 @@ const Index = () => {
           interest={interest} onInterestChange={setInterest} interestSuggestions={config.interests}
         />
 
-        <Card className="border-2 border-purple-200 shadow-lg">
-          <CardHeader className="bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-t-lg">
+        <Card className="border-2 border-border shadow-lg">
+          <CardHeader className="bg-gradient-to-r from-primary to-accent-foreground text-primary-foreground rounded-t-lg">
             <CardTitle className="flex items-center gap-2"><Globe className="h-5 w-5" />{labels.sources}</CardTitle>
-            <CardDescription className="text-purple-100">{labels.sourcesDesc}</CardDescription>
+            <CardDescription className="text-primary-foreground/70">{labels.sourcesDesc}</CardDescription>
           </CardHeader>
           <CardContent className="p-6">
             <div className="flex flex-wrap items-center gap-4">
@@ -185,8 +188,8 @@ const Index = () => {
               return (
                 <Card key={article.id} className={cn(
                   'transition-all duration-300 hover:shadow-xl border',
-                  hasUrgent && 'border-2 border-red-400 shadow-lg bg-red-50/50',
-                  !hasUrgent && article.tags.includes('new') && 'border-2 border-green-400 shadow-lg bg-green-50/50',
+                  hasUrgent && 'border-2 border-destructive shadow-lg bg-destructive/5',
+                  !hasUrgent && article.tags.includes('new') && 'border-2 border-green-400 dark:border-green-600 shadow-lg bg-green-50/50 dark:bg-green-950/20',
                   !hasUrgent && !article.tags.includes('new') && 'border-border'
                 )}>
                   <CardHeader>
@@ -196,7 +199,9 @@ const Index = () => {
                         <Badge variant="secondary" className="text-sm"><Tag className="h-3 w-3 mr-1" />{article.categoryEmoji} {article.categoryName}</Badge>
                         {article.tags.map(tag => <ArticleTagBadge key={tag} tag={tag} labels={labels} />)}
                       </div>
-                      <CardTitle className="text-lg text-foreground leading-tight">{renderTextWithTooltips(article.title)}</CardTitle>
+                      <Link to={`/article/${article.id}`}>
+                        <CardTitle className="text-lg text-foreground leading-tight hover:text-primary transition-colors cursor-pointer">{renderTextWithTooltips(article.title)}</CardTitle>
+                      </Link>
                       <CardDescription className="flex items-center gap-2"><CalendarIcon className="h-4 w-4" />{article.date}</CardDescription>
                     </div>
                   </CardHeader>
@@ -209,17 +214,17 @@ const Index = () => {
                     </div>
                     <Separator />
                     <div>
-                      <h4 className="font-semibold text-green-700 mb-2 flex items-center gap-1"><Sparkles className="h-4 w-4" />{labels.simplified}</h4>
-                      <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
-                        <p className="text-sm text-green-800 leading-relaxed">{article.simplifiedContent}</p>
+                      <h4 className="font-semibold text-green-700 dark:text-green-400 mb-2 flex items-center gap-1"><Sparkles className="h-4 w-4" />{labels.simplified}</h4>
+                      <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 rounded-lg border border-green-200 dark:border-green-800">
+                        <p className="text-sm text-green-800 dark:text-green-300 leading-relaxed">{article.simplifiedContent}</p>
                       </div>
                     </div>
                     <div>
-                      <h4 className="font-semibold text-purple-700 mb-2 flex items-center gap-1"><Sparkles className="h-4 w-4" />{labels.keyPoints}</h4>
+                      <h4 className="font-semibold text-foreground mb-2 flex items-center gap-1"><Sparkles className="h-4 w-4 text-primary" />{labels.keyPoints}</h4>
                       <div className="space-y-2">
                         {article.detailedPoints.map((point, i) => (
-                          <div key={i} className="p-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-200">
-                            <p className="text-sm text-purple-800 leading-relaxed">• {point}</p>
+                          <div key={i} className="p-3 bg-secondary/50 rounded-lg border border-border">
+                            <p className="text-sm text-foreground leading-relaxed">• {point}</p>
                           </div>
                         ))}
                       </div>
@@ -243,6 +248,8 @@ const Index = () => {
             </div>
           )}
         </div>
+
+        <NewsletterSignup interests={config.interests} country={country} />
       </div>
     </div>
   );
