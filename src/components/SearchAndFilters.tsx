@@ -1,6 +1,7 @@
 import React from 'react';
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import InterestFilter from "@/components/InterestFilter";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Search, X } from "lucide-react";
@@ -23,9 +24,14 @@ interface SearchAndFiltersProps {
     clearFilters: string;
     activeFilters: string;
     search: string;
+    interestsPlaceholder?: string;
+    interestsLabel?: string;
   };
   documentTypes: { value: string; label: string }[];
   subjects: { value: string; label: string }[];
+  interest?: string;
+  onInterestChange?: (value: string) => void;
+  interestSuggestions?: string[];
 }
 
 const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
@@ -40,6 +46,9 @@ const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
   labels,
   documentTypes,
   subjects,
+  interest,
+  onInterestChange,
+  interestSuggestions,
 }) => {
   return (
     <Card className="border-2 border-blue-200 shadow-lg">
@@ -59,6 +68,16 @@ const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
             className="pl-10"
           />
         </div>
+
+        {interest !== undefined && onInterestChange && interestSuggestions && (
+          <InterestFilter
+            interest={interest}
+            onInterestChange={onInterestChange}
+            suggestions={interestSuggestions}
+            placeholder={labels.interestsPlaceholder || ''}
+            label={labels.interestsLabel || ''}
+          />
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>

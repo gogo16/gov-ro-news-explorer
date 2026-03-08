@@ -129,12 +129,6 @@ const Index = () => {
           </div>
         </div>
 
-        <Card className="border-2 border-amber-200 shadow-lg">
-          <CardContent className="p-6">
-            <InterestFilter interest={interest} onInterestChange={setInterest} suggestions={config.interests} placeholder={labels.interestsPlaceholder} label={labels.interestsLabel} />
-          </CardContent>
-        </Card>
-
         <SearchAndFilters
           searchTerm={searchTerm} onSearchChange={setSearchTerm}
           documentType={documentType} onDocumentTypeChange={setDocumentType}
@@ -142,6 +136,7 @@ const Index = () => {
           onClearFilters={clearAllFilters}
           hasActiveFilters={hasActiveFilters || selectedDate !== undefined || selectedWebsite !== 'all'}
           labels={labels} documentTypes={config.documentTypes} subjects={config.subjects}
+          interest={interest} onInterestChange={setInterest} interestSuggestions={config.interests}
         />
 
         <Card className="border-2 border-purple-200 shadow-lg">
