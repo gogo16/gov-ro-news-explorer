@@ -239,6 +239,9 @@ function cleanText(text: string): string {
     .replace(/-{3,}/g, '')
     .replace(/\n{3,}/g, '\n\n')
 
+  // Strip cookie banners (MAE, general RO sites)
+  cleaned = cleaned.replace(/This website uses cookies[\s\S]*?Cookie Consent plugin for the EU cookie law\s*/gi, '')
+  cleaned = cleaned.replace(/Acest site folosește cookies[\s\S]*?(?:politica de cookies|cookie policy)\s*/gi, '')
   // Strip YouTube embed boilerplate
   cleaned = cleaned.replace(/Sari la conținut[\s\S]*?YouTube[\s\S]*?(?:AnuleazăConfirmă|Vizionează pe)/gi, '')
   cleaned = cleaned.replace(/Skip to content[\s\S]*?YouTube[\s\S]*?(?:Cancel|Watch on)/gi, '')
@@ -246,6 +249,15 @@ function cleanText(text: string): string {
   cleaned = cleaned.replace(/Alte articole:[\s\S]*$/i, '')
   cleaned = cleaned.replace(/Share on Facebook[\s\S]*$/i, '')
   cleaned = cleaned.replace(/ULTIMA ORĂ[\s\S]*$/i, '')
+  // Strip MAE footer/sidebar
+  cleaned = cleaned.replace(/Centrul de presă[\s\S]*$/i, '')
+  cleaned = cleaned.replace(/Agenda MAE[\s\S]*$/i, '')
+  cleaned = cleaned.replace(/Conectat la M@E[\s\S]*$/i, '')
+  cleaned = cleaned.replace(/Rate limit exceeded[\s\S]*$/i, '')
+  cleaned = cleaned.replace(/Tweets by[\s\S]*$/i, '')
+  // Strip MAE header navigation
+  cleaned = cleaned.replace(/^Ministerul Afacerilor Externe\s*Ministerul Afacerilor Externe - Legături rapide\s*/i, '')
+  cleaned = cleaned.replace(/Comunicate de presă\s*An:\s*Select[\s\S]*?Lună:\s*Select\s*/i, '')
   // Strip image placeholders
   cleaned = cleaned.replace(/!\[\]/g, '')
   cleaned = cleaned.replace(/!\[[^\]]*\]/g, '')
