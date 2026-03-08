@@ -228,22 +228,27 @@ async function discoverArticleUrls(firecrawlKey: string, source: typeof RO_SOURC
   let allLinks: string[] = []
 
   if (useMap) {
-    const response = await fetch(`${FIRECRAWL_API}/map`, {
+    // Use Firecrawl search to find recent articles from these JS-heavy sites
+    const domain = new URL(source.listingUrl).hostname
+    const response = await fetch(`${FIRECRAWL_API}/search`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${firecrawlKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        url: source.listingUrl,
-        search: 'comunicate presa',
-        limit: 50,
+        query: `site:${domain} comunicate presa 2026`,
+        limit: 20,
+        lang: 'ro',
+        country: 'RO',
+        tbs: 'qdr:m',
       }),
     })
 
     const data = await response.json()
-    if (!response.ok) throw new Error(`Firecrawl map error ${response.status}: ${JSON.stringify(data)}`)
-    allLinks = data.links || data.data?.links || []
+    if (!response.ok) throw new Error(`Firecrawl search error ${response.status}: ${JSON.stringify(data)}`)
+    const results = data.data || []
+    allLinks = results.map((r: any) => r.url).filter(Boolean)
   } else {
     const response = await fetch(`${FIRECRAWL_API}/scrape`, {
       method: 'POST',
