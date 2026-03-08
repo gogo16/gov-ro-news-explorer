@@ -1,0 +1,1 @@
+DELETE FROM scraped_articles WHERE original_content LIKE '%We use some essential cookies%'
