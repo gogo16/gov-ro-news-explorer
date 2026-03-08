@@ -46,6 +46,9 @@ const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
   labels,
   documentTypes,
   subjects,
+  interest,
+  onInterestChange,
+  interestSuggestions,
 }) => {
   return (
     <Card className="border-2 border-blue-200 shadow-lg">
