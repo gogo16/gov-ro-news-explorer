@@ -50,7 +50,10 @@ const Index = () => {
     return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
   };
 
-  const articles = config.articles;
+  const { data: dbArticles } = useScrapedArticles(country);
+
+  // Merge static config articles with database articles
+  const articles = [...config.articles, ...(dbArticles || [])];
 
   const websites: Website[] = config.websites.map(w => ({
     ...w,
