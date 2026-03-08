@@ -2,42 +2,58 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 }
 
-// UK government sources to scrape
+const FIRECRAWL_API = 'https://api.firecrawl.dev/v1'
+
+// UK government sources — listing pages to discover article links
 const UK_SOURCES = [
   {
     id: 'govuk',
     name: 'GOV.UK',
-    url: 'https://www.gov.uk/search/news-and-communications?order=updated-newest',
-    categories: ['housing', 'tax', 'benefits', 'education', 'employment', 'immigration', 'transport', 'environment'],
+    listingUrl: 'https://www.gov.uk/search/news-and-communications?order=updated-newest',
+    // Pattern to match actual article URLs (not navigation/search pages)
+    articlePattern: /^https:\/\/www\.gov\.uk\/government\/(news|publications|speeches|consultations|statistics)\//,
+    fallbackPattern: /^https:\/\/www\.gov\.uk\/(government\/|guidance\/)/,
   },
   {
     id: 'hmrc',
     name: 'HMRC',
-    url: 'https://www.gov.uk/government/organisations/hm-revenue-customs',
-    categories: ['tax', 'benefits'],
+    listingUrl: 'https://www.gov.uk/government/organisations/hm-revenue-customs/latest',
+    articlePattern: /^https:\/\/www\.gov\.uk\/government\/(news|publications|consultations)\//,
+    fallbackPattern: /^https:\/\/www\.gov\.uk\/(government\/|guidance\/)/,
   },
   {
     id: 'nhs',
     name: 'NHS',
-    url: 'https://www.england.nhs.uk/news/',
-    categories: ['health'],
+    listingUrl: 'https://www.england.nhs.uk/news/',
+    articlePattern: /^https:\/\/www\.england\.nhs\.uk\/\d{4}\/\d{2}\//,
+    fallbackPattern: /^https:\/\/www\.england\.nhs\.uk\//,
   },
 ]
 
-// Category detection
+// Non-article URL patterns to skip
+const SKIP_PATTERNS = [
+  /\/search\?/, /\/search\//, /\?order=/, /\?page=/, /#/,
+  /\?filter-/, /filter-keyword=/, /filter-category=/,
+  /\/cookie/, /\/privacy/, /\/terms/, /\/accessibility/,
+  /\/about/, /\/contact/, /\/help/, /\/feedback/,
+  /\/organisations$/, /\/latest$/, /\/news\/?$/,
+  /twitter\.com/, /facebook\.com/, /youtube\.com/, /linkedin\.com/,
+]
+
 const CATEGORY_KEYWORDS: Record<string, { keywords: string[]; emoji: string; name: string }> = {
-  housing: { keywords: ['housing', 'landlord', 'tenant', 'rent', 'home', 'property', 'building'], emoji: '🏠', name: 'Housing' },
-  tax: { keywords: ['tax', 'hmrc', 'self-assessment', 'vat', 'income tax', 'duty'], emoji: '💷', name: 'Tax' },
-  benefits: { keywords: ['benefit', 'universal credit', 'pension', 'allowance', 'welfare', 'dwp'], emoji: '🤝', name: 'Benefits' },
-  health: { keywords: ['health', 'nhs', 'hospital', 'mental health', 'doctor', 'vaccine', 'medical'], emoji: '🏥', name: 'Health' },
-  education: { keywords: ['education', 'school', 'university', 'student', 'ofsted', 'childcare'], emoji: '🎓', name: 'Education' },
-  employment: { keywords: ['employment', 'job', 'worker', 'minimum wage', 'workplace'], emoji: '💼', name: 'Employment' },
-  immigration: { keywords: ['immigration', 'visa', 'asylum', 'border', 'passport'], emoji: '🌍', name: 'Immigration' },
-  transport: { keywords: ['transport', 'rail', 'road', 'driving', 'highway'], emoji: '🚗', name: 'Transport' },
-  environment: { keywords: ['environment', 'climate', 'energy', 'green', 'pollution'], emoji: '🌱', name: 'Environment' },
+  housing: { keywords: ['housing', 'landlord', 'tenant', 'rent', 'home', 'property', 'building', 'planning'], emoji: '🏠', name: 'Housing' },
+  tax: { keywords: ['tax', 'hmrc', 'self-assessment', 'vat', 'income tax', 'duty', 'fiscal'], emoji: '💷', name: 'Tax' },
+  benefits: { keywords: ['benefit', 'universal credit', 'pension', 'allowance', 'welfare', 'dwp', 'disability'], emoji: '🤝', name: 'Benefits' },
+  health: { keywords: ['health', 'nhs', 'hospital', 'mental health', 'doctor', 'vaccine', 'medical', 'cancer', 'patient'], emoji: '🏥', name: 'Health' },
+  education: { keywords: ['education', 'school', 'university', 'student', 'ofsted', 'childcare', 'teacher', 'apprentice'], emoji: '🎓', name: 'Education' },
+  employment: { keywords: ['employment', 'job', 'worker', 'minimum wage', 'workplace', 'labour', 'workforce'], emoji: '💼', name: 'Employment' },
+  immigration: { keywords: ['immigration', 'visa', 'asylum', 'border', 'passport', 'migrant'], emoji: '🌍', name: 'Immigration' },
+  transport: { keywords: ['transport', 'rail', 'road', 'driving', 'highway', 'train', 'bus', 'aviation'], emoji: '🚗', name: 'Transport' },
+  environment: { keywords: ['environment', 'climate', 'energy', 'green', 'pollution', 'carbon', 'net zero', 'renewable'], emoji: '🌱', name: 'Environment' },
+  defense: { keywords: ['defence', 'military', 'armed forces', 'security', 'police', 'crime'], emoji: '🛡️', name: 'Defence & Security' },
 }
 
 function detectCategory(text: string): { category: string; emoji: string; name: string } {
@@ -54,13 +70,13 @@ function detectInterests(text: string): string[] {
   const interests: string[] = []
   const lower = text.toLowerCase()
   const interestMap: Record<string, string[]> = {
-    'info for landlords': ['landlord', 'rental property', 'tenancy'],
-    'benefits for unemployed': ['unemployment', 'jobseeker', 'universal credit'],
+    'info for landlords': ['landlord', 'rental property', 'tenancy', 'letting'],
+    'benefits for unemployed': ['unemployment', 'jobseeker', 'universal credit', 'job centre'],
     'universal credit': ['universal credit'],
     'council tax': ['council tax'],
-    'childcare': ['childcare', 'nursery', 'child benefit'],
-    'NHS services': ['nhs', 'hospital', 'gp surgery', 'health service'],
-    'visa & immigration': ['visa', 'immigration', 'passport'],
+    'childcare': ['childcare', 'nursery', 'child benefit', 'parental leave'],
+    'NHS services': ['nhs', 'hospital', 'gp surgery', 'health service', 'ambulance', 'a&e'],
+    'visa & immigration': ['visa', 'immigration', 'passport', 'right to work'],
   }
   for (const [interest, keywords] of Object.entries(interestMap)) {
     if (keywords.some(kw => lower.includes(kw))) interests.push(interest)
@@ -69,7 +85,6 @@ function detectInterests(text: string): string[] {
 }
 
 function simplifyContent(text: string): string {
-  // Simple rule-based simplification
   let simplified = text
     .replace(/\b(pursuant to|in accordance with|notwithstanding)\b/gi, 'following')
     .replace(/\b(aforementioned|hereinafter)\b/gi, 'this')
@@ -78,22 +93,116 @@ function simplifyContent(text: string): string {
     .replace(/\b(in the event that)\b/gi, 'if')
     .replace(/\b(for the purpose of)\b/gi, 'to')
     .replace(/\b(it is anticipated that)\b/gi, 'we expect')
+    .replace(/\b(the government has announced)\b/gi, 'the government said')
+    .replace(/\b(legislation|regulatory framework)\b/gi, 'rules')
+    .replace(/\b(implementation)\b/gi, 'putting into action')
 
-  // Truncate if too long
-  if (simplified.length > 500) {
-    simplified = simplified.substring(0, 497) + '...'
+  if (simplified.length > 600) {
+    simplified = simplified.substring(0, 597) + '...'
   }
-
   return simplified + ' 📋✨'
 }
 
 function extractKeyPoints(text: string): string[] {
-  // Split by sentences and pick first 3 meaningful ones
-  const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 20)
-  return sentences.slice(0, 3).map((s, i) => {
-    const emojis = ['📌', '✅', '💡', '⚡', '🔔']
+  const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 30)
+  const unique = [...new Set(sentences.map(s => s.trim()))]
+  return unique.slice(0, 4).map((s, i) => {
+    const emojis = ['📌', '✅', '💡', '⚡']
     return `${s.trim()}. ${emojis[i % emojis.length]}`
   })
+}
+
+// Clean markdown artifacts from text
+function cleanText(text: string): string {
+  return text
+    .replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1') // [text](url) → text
+    .replace(/\(https?:\/\/[^\)]+\)/g, '')     // (url) → remove
+    .replace(/!\[([^\]]*)\]\([^\)]+\)/g, '')   // ![alt](url) → remove
+    .replace(/#{1,6}\s*/g, '')                  // headers
+    .replace(/[*_]{1,3}/g, '')                  // bold/italic
+    .replace(/\|/g, ' ')                        // table pipes
+    .replace(/-{3,}/g, '')                      // horizontal rules
+    .replace(/\n{3,}/g, '\n\n')                // excessive newlines
+    .trim()
+}
+
+// Scrape listing page to discover article links
+async function discoverArticleUrls(firecrawlKey: string, source: typeof UK_SOURCES[0]): Promise<string[]> {
+  console.log(`[${source.id}] Discovering articles from: ${source.listingUrl}`)
+
+  const response = await fetch(`${FIRECRAWL_API}/scrape`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${firecrawlKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      url: source.listingUrl,
+      formats: ['links'],
+      onlyMainContent: true,
+    }),
+  })
+
+  const data = await response.json()
+  if (!response.ok) throw new Error(`Firecrawl error ${response.status}: ${JSON.stringify(data)}`)
+
+  const allLinks: string[] = data.data?.links || data.links || []
+  console.log(`[${source.id}] Found ${allLinks.length} total links`)
+
+  // Filter to actual article URLs
+  const articleUrls = allLinks.filter(url => {
+    if (SKIP_PATTERNS.some(p => p.test(url))) return false
+    return source.articlePattern.test(url) || source.fallbackPattern.test(url)
+  })
+
+  // Deduplicate and take top 10
+  const unique = [...new Set(articleUrls)]
+  console.log(`[${source.id}] ${unique.length} article URLs after filtering`)
+  return unique.slice(0, 10)
+}
+
+// Scrape individual article page for rich content
+async function scrapeArticle(firecrawlKey: string, url: string): Promise<{
+  title: string; content: string; date?: string; summary?: string
+} | null> {
+  console.log(`  Scraping article: ${url}`)
+
+  const response = await fetch(`${FIRECRAWL_API}/scrape`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${firecrawlKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      url,
+      formats: ['markdown'],
+      onlyMainContent: true,
+    }),
+  })
+
+  const data = await response.json()
+  if (!response.ok) {
+    console.error(`  Failed to scrape ${url}: ${response.status}`)
+    return null
+  }
+
+  const markdown = data.data?.markdown || data.markdown || ''
+  const metadata = data.data?.metadata || data.metadata || {}
+
+  if (!markdown || markdown.length < 100) return null
+
+  const cleaned = cleanText(markdown)
+  const title = metadata.title || cleaned.split('\n')[0]?.substring(0, 200) || ''
+
+  // Try to extract date from content or metadata
+  const dateMatch = cleaned.match(/(\d{1,2}\s+(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{4})/i)
+  const date = dateMatch ? dateMatch[1] : undefined
+
+  return {
+    title: cleanText(title).substring(0, 300),
+    content: cleaned,
+    date,
+  }
 }
 
 Deno.serve(async (req) => {
@@ -113,7 +222,6 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    // Create run log
     const { data: run } = await supabase.from('scraper_runs').insert({
       status: 'running',
       sources_scraped: UK_SOURCES.map(s => s.id),
@@ -124,93 +232,64 @@ Deno.serve(async (req) => {
 
     for (const source of UK_SOURCES) {
       try {
-        console.log(`Scraping ${source.name}: ${source.url}`)
+        // Step 1: Discover article URLs from listing page
+        const articleUrls = await discoverArticleUrls(firecrawlKey, source)
 
-        // Use Firecrawl to scrape
-        const scrapeResponse = await fetch('https://api.firecrawl.dev/v1/scrape', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${firecrawlKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            url: source.url,
-            formats: ['markdown', 'links'],
-            onlyMainContent: true,
-          }),
-        })
-
-        const scrapeData = await scrapeResponse.json()
-
-        if (!scrapeResponse.ok) {
-          errors.push(`${source.id}: Firecrawl error ${scrapeResponse.status}`)
-          console.error(`Firecrawl error for ${source.id}:`, scrapeData)
+        if (articleUrls.length === 0) {
+          errors.push(`${source.id}: No article URLs found`)
           continue
         }
 
-        const markdown = scrapeData.data?.markdown || scrapeData.markdown || ''
-        const links = scrapeData.data?.links || scrapeData.links || []
-        const metadata = scrapeData.data?.metadata || scrapeData.metadata || {}
-
-        if (!markdown) {
-          errors.push(`${source.id}: No content returned`)
-          continue
-        }
-
-        // Parse articles from the markdown content
-        // Split by headers or strong patterns that indicate article boundaries
-        const articleBlocks = markdown.split(/\n#{1,3}\s+/).filter((b: string) => b.trim().length > 50)
-
-        for (const block of articleBlocks.slice(0, 5)) { // Max 5 articles per source
-          const lines = block.split('\n').filter((l: string) => l.trim())
-          if (lines.length < 2) continue
-
-          // Clean markdown links from title: "Title(https://...)" → "Title"
-          const title = lines[0].replace(/[\[\]#*]/g, '').replace(/\(https?:\/\/[^\)]+\)/g, '').trim()
-          if (!title || title.length < 10) continue
-
-          // Clean markdown links and artifacts from content
-          const content = lines.slice(1).join(' ').replace(/[\[\]#*]/g, '').replace(/\(https?:\/\/[^\)]+\)/g, '').replace(/!\S+/g, '').trim()
-          if (content.length < 30) continue
-
-          // Extract URL from markdown links in the block
-          const urlMatch = block.match(/\((https?:\/\/[^\)]+)\)/)
-          const articleUrl = urlMatch ? urlMatch[1] : source.url
-
+        // Step 2: Scrape each individual article
+        for (const articleUrl of articleUrls) {
           // Check if already exists
           const { data: existing } = await supabase
             .from('scraped_articles')
             .select('id')
             .eq('url', articleUrl)
-            .eq('title', title)
             .maybeSingle()
 
-          if (existing) continue
+          if (existing) {
+            console.log(`  Skipping (already exists): ${articleUrl}`)
+            continue
+          }
 
-          const { category, emoji, name } = detectCategory(title + ' ' + content)
-          const interests = detectInterests(title + ' ' + content)
-          const today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+          const article = await scrapeArticle(firecrawlKey, articleUrl)
+          if (!article || !article.title || article.title.length < 10) continue
+
+          // Skip non-article pages
+          const skipTitles = ['cookie', 'privacy', 'accessibility', 'terms', 'contact', 'about us', 'search results']
+          if (skipTitles.some(s => article.title.toLowerCase().includes(s))) continue
+
+          const fullText = article.title + ' ' + article.content
+          const { category, emoji, name } = detectCategory(fullText)
+          const interests = detectInterests(fullText)
+
+          const articleDate = article.date || new Date().toLocaleDateString('en-GB', {
+            day: 'numeric', month: 'long', year: 'numeric'
+          })
 
           const { error: insertError } = await supabase.from('scraped_articles').insert({
             country: 'uk',
             source: source.id,
-            title,
-            original_content: content.substring(0, 2000),
-            simplified_content: simplifyContent(content),
-            detailed_points: extractKeyPoints(content),
+            title: article.title,
+            original_content: article.content.substring(0, 3000),
+            simplified_content: simplifyContent(article.content),
+            detailed_points: extractKeyPoints(article.content),
             category,
             category_emoji: emoji,
             category_name: name,
             url: articleUrl,
             tags: ['new'],
             interests,
-            article_date: today,
+            article_date: articleDate,
           })
 
           if (insertError) {
             errors.push(`${source.id}: Insert error - ${insertError.message}`)
           } else {
             totalArticles++
+            console.log(`  ✅ Saved: ${article.title.substring(0, 60)}...`)
           }
         }
       } catch (err) {
@@ -220,7 +299,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Update run log
     if (run) {
       await supabase.from('scraper_runs').update({
         completed_at: new Date().toISOString(),
