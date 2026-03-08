@@ -97,7 +97,7 @@ function detectInterests(text: string): string[] {
   return interests
 }
 
-function simplifyContent(text: string): string {
+function simplifyContentFallback(text: string): string {
   let simplified = text
     .replace(/\b(pursuant to|in accordance with|notwithstanding)\b/gi, 'following')
     .replace(/\b(aforementioned|hereinafter)\b/gi, 'this')
@@ -105,24 +105,49 @@ function simplifyContent(text: string): string {
     .replace(/\b(with immediate effect)\b/gi, 'right away')
     .replace(/\b(in the event that)\b/gi, 'if')
     .replace(/\b(for the purpose of)\b/gi, 'to')
-    .replace(/\b(it is anticipated that)\b/gi, 'we expect')
-    .replace(/\b(the government has announced)\b/gi, 'the government said')
     .replace(/\b(legislation|regulatory framework)\b/gi, 'rules')
-    .replace(/\b(implementation)\b/gi, 'putting into action')
-
-  if (simplified.length > 600) {
-    simplified = simplified.substring(0, 597) + '...'
-  }
+  if (simplified.length > 600) simplified = simplified.substring(0, 597) + '...'
   return simplified + ' 📋✨'
 }
 
-function extractKeyPoints(text: string): string[] {
+function extractKeyPointsFallback(text: string): string[] {
   const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 30)
   const unique = [...new Set(sentences.map(s => s.trim()))]
   return unique.slice(0, 4).map((s, i) => {
     const emojis = ['📌', '✅', '💡', '⚡']
     return `${s.trim()}. ${emojis[i % emojis.length]}`
   })
+}
+
+async function aiSimplify(title: string, content: string, language: string): Promise<{ simplified: string; keyPoints: string[] } | null> {
+  try {
+    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY')
+    if (!LOVABLE_API_KEY) return null
+
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!
+
+    const response = await fetch(`${supabaseUrl}/functions/v1/simplify-article`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${supabaseAnonKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ title, content, language }),
+    })
+
+    if (!response.ok) {
+      console.error(`AI simplify failed: ${response.status}`)
+      return null
+    }
+
+    const data = await response.json()
+    if (data.simplified && data.keyPoints) return data
+    return null
+  } catch (err) {
+    console.error('AI simplify error:', err)
+    return null
+  }
 }
 
 // Clean markdown artifacts from text
