@@ -7,7 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Globe, Sparkles, FileText, Calendar as CalendarIcon, Tag, ChevronLeft, ChevronRight } from "lucide-react";
+import { Globe, Sparkles, FileText, Calendar as CalendarIcon, Tag, ChevronLeft, ChevronRight, Coffee } from "lucide-react";
 import { cn } from "@/lib/utils";
 import WebsiteMenu from "@/components/WebsiteMenu";
 import SearchAndFilters from "@/components/SearchAndFilters";
