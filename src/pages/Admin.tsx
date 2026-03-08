@@ -74,6 +74,9 @@ const Admin = () => {
   const { toast } = useToast();
   const appData = useAppData();
   const config = useMemo(() => appData.getData(country), [appData, country]);
+  const triggerScrape = useTriggerScrape();
+  const { data: scrapedArticles } = useScrapedArticles(country);
+  const { data: latestRun } = useLatestScrapeRun();
 
   // Page state (same as Index)
   const [selectedWebsite, setSelectedWebsite] = useState<string>('all');
