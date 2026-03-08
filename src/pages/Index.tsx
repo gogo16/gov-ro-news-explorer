@@ -128,7 +128,18 @@ const Index = () => {
       <div className="max-w-7xl mx-auto space-y-8">
         <div className="flex items-center justify-between">
           <CountrySwitcher country={country} onCountryChange={setCountry} />
-          <ThemeToggle />
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 text-sm"
+              onClick={() => window.open('https://revolut.me/YOUR_USERNAME', '_blank')}
+            >
+              <Coffee className="h-4 w-4" />
+              Support Me ☕
+            </Button>
+            <ThemeToggle />
+          </div>
         </div>
 
         <div className="text-center space-y-4">
