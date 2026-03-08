@@ -17,6 +17,7 @@ import ArticleTagBadge from "@/components/ArticleTagBadge";
 import { filterArticles, highlightLegalTerms, removeDiacritics } from "@/utils/textProcessing";
 import { Country, Website } from "@/data/countryConfig";
 import { useAppData } from "@/context/AppDataContext";
+import { useScrapedArticles } from "@/hooks/useScrapedArticles";
 
 const Index = () => {
   const [country, setCountry] = useState<Country>('ro');
