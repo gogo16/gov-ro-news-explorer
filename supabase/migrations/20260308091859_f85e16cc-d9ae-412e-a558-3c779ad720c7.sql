@@ -1,0 +1,1 @@
+DELETE FROM scraped_articles WHERE original_content LIKE '%This website uses cookies%' OR original_content LIKE '%Cookie Consent plugin%' OR simplified_content LIKE '%cookie%Cookie%' OR (source = 'mae' AND original_content LIKE '%Tip: Comunicat de presă%Tip: Comunicat de presă%Tip: Comunicat de presă%')
