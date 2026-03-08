@@ -120,37 +120,47 @@ function extractKeyPointsFallback(text: string): string[] {
 }
 
 async function aiSimplify(title: string, content: string, language: string): Promise<{ simplified: string; keyPoints: string[] } | null> {
-  try {
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY')
-    if (!LOVABLE_API_KEY) return null
+  const maxRetries = 2
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY')
+      if (!LOVABLE_API_KEY) return null
 
-    // Rate limit: wait 3s before each AI call
-    await new Promise(r => setTimeout(r, 3000))
+      // Rate limit: wait 5s before each AI call (longer on retries)
+      await new Promise(r => setTimeout(r, 5000 + attempt * 5000))
 
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!
+      const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+      const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!
 
-    const response = await fetch(`${supabaseUrl}/functions/v1/simplify-article`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${supabaseAnonKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ title, content, language }),
-    })
+      const response = await fetch(`${supabaseUrl}/functions/v1/simplify-article`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${supabaseAnonKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ title, content, language }),
+      })
 
-    if (!response.ok) {
-      console.error(`AI simplify failed: ${response.status}`)
+      if (response.status === 429 && attempt < maxRetries) {
+        console.log(`AI rate limited, retry ${attempt + 1}/${maxRetries}...`)
+        continue
+      }
+
+      if (!response.ok) {
+        console.error(`AI simplify failed: ${response.status}`)
+        return null
+      }
+
+      const data = await response.json()
+      if (data.simplified && data.keyPoints) return data
+      return null
+    } catch (err) {
+      console.error('AI simplify error:', err)
+      if (attempt < maxRetries) continue
       return null
     }
-
-    const data = await response.json()
-    if (data.simplified && data.keyPoints) return data
-    return null
-  } catch (err) {
-    console.error('AI simplify error:', err)
-    return null
   }
+  return null
 }
 
 // Clean markdown artifacts and cookie/navigation boilerplate from text
