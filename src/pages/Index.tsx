@@ -142,10 +142,10 @@ const Index = () => {
           interest={interest} onInterestChange={setInterest} interestSuggestions={config.interests}
         />
 
-        <Card className="border-2 border-purple-200 shadow-lg">
-          <CardHeader className="bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-t-lg">
+        <Card className="border-2 border-border shadow-lg">
+          <CardHeader className="bg-gradient-to-r from-primary to-accent-foreground text-primary-foreground rounded-t-lg">
             <CardTitle className="flex items-center gap-2"><Globe className="h-5 w-5" />{labels.sources}</CardTitle>
-            <CardDescription className="text-purple-100">{labels.sourcesDesc}</CardDescription>
+            <CardDescription className="text-primary-foreground/70">{labels.sourcesDesc}</CardDescription>
           </CardHeader>
           <CardContent className="p-6">
             <div className="flex flex-wrap items-center gap-4">
