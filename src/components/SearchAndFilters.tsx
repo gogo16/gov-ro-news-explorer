@@ -69,6 +69,16 @@ const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
           />
         </div>
 
+        {interest !== undefined && onInterestChange && interestSuggestions && (
+          <InterestFilter
+            interest={interest}
+            onInterestChange={onInterestChange}
+            suggestions={interestSuggestions}
+            placeholder={labels.interestsPlaceholder || ''}
+            label={labels.interestsLabel || ''}
+          />
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="text-sm font-medium text-muted-foreground mb-1 block">
