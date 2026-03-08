@@ -23,9 +23,14 @@ interface SearchAndFiltersProps {
     clearFilters: string;
     activeFilters: string;
     search: string;
+    interestsPlaceholder?: string;
+    interestsLabel?: string;
   };
   documentTypes: { value: string; label: string }[];
   subjects: { value: string; label: string }[];
+  interest?: string;
+  onInterestChange?: (value: string) => void;
+  interestSuggestions?: string[];
 }
 
 const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({

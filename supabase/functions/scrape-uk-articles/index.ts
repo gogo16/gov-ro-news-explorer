@@ -20,9 +20,9 @@ const UK_SOURCES = [
   {
     id: 'hmrc',
     name: 'HMRC',
-    listingUrl: 'https://www.gov.uk/government/organisations/hm-revenue-customs/latest',
-    articlePattern: /^https:\/\/www\.gov\.uk\/government\/(news|publications|consultations)\//,
-    fallbackPattern: /^https:\/\/www\.gov\.uk\/(government\/|guidance\/)/,
+    listingUrl: 'https://www.gov.uk/search/news-and-communications?organisations%5B%5D=hm-revenue-customs&order=updated-newest',
+    articlePattern: /^https:\/\/www\.gov\.uk\/government\/(news|publications|speeches|consultations|statistics)\//,
+    fallbackPattern: /^https:\/\/www\.gov\.uk\/(government\/|guidance\/|hmrc-)/,
   },
   {
     id: 'nhs',
